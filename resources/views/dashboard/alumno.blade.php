@@ -16,7 +16,7 @@
                 </div>
                 <div class="card-body">
                     <div class="profile-picture text-center mb-3">
-                        <img src="{{ asset($alumno->image) }}" alt="Foto de perfil" class="img-thumbnail rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                        <img src="{{ asset('storage/' . $alumno->image) }}" alt="Foto de perfil" class="img-thumbnail rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
                     </div>
                     <div class="profile-info">
                         <h4 class="text-center">{{ $alumno->nombre1 }} {{ $alumno->nombre2 }} {{ $alumno->apellidop }} {{ $alumno->apellidom }}</h4>

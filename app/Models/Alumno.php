@@ -78,7 +78,7 @@ class Alumno extends Model
         parent::boot();
 
         static::creating(function ($alumno) {
-            if (!$alumno->registro) { // Solo establecer si el campo 'registro' no tiene un valor
+            if (empty($alumno->registro)) { // Solo asignar si 'registro' está vacío
                 $alumno->registro = self::getNextRegistro();
             }
         });
@@ -86,10 +86,10 @@ class Alumno extends Model
 
     private static function getNextRegistro()
     {
-        // Obtiene el valor máximo del campo 'registro'
+        // Obtiene el valor máximo del campo 'registro' en la tabla alumnos
         $lastRegistro = DB::table('alumnos')->max('registro');
 
-        // Incrementa el valor
+        // Incrementa el valor de 'registro'
         return $lastRegistro ? $lastRegistro + 1 : 1;
     }
     

@@ -13,6 +13,7 @@ class Asignatura extends Model
         'codigo_asignatura',
         'credito',
         'itinerario',
+        'unidad_curricular',
         'maestria_id',
     ];
     public function calificacionVerificaciones()

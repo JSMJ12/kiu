@@ -52,9 +52,9 @@ class User extends Authenticatable
     ];
     public function adminlte_image()
     {
-
-        return $this->image ? asset($this->image) : 'https://ui-avatars.com/api/?name=' . urlencode($this->name);
+        return $this->image ? asset('storage/' . $this->image) : 'https://ui-avatars.com/api/?name=' . urlencode($this->name);
     }
+
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPassword($token));
@@ -68,5 +68,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(Message::class, 'receiver_id');
     }
-    
 }

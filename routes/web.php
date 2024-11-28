@@ -70,6 +70,8 @@ Route::put('/usuarios/{usuario}/enable', [UsuarioController::class, 'enable'])->
 
 //CRUD DOCENTES
 Route::resource('docentes', DocenteController::class)->middleware(['can:dashboard_secretario']);
+Route::get('/docentes/{docente}/asignaturas', [DocenteController::class, 'cargarAsignaturas']);
+Route::get('/docentes/{dni}/cohortes', [DocenteController::class, 'obtenerCohortes'])->name('docentes.cohortes');
 
 //CRUD SECRETARIOS
 Route::resource('secretarios', SecretarioController::class)->middleware(['can:dashboard_admin']);
@@ -110,7 +112,7 @@ Route::resource('postulaciones', PostulanteController::class);
 Route::post('postulante/store', [DashboardPostulanteController::class, 'store'])->middleware('can:dashboard_postulante')->name('dashboard_postulante.store');
 Route::get('postulantes/{dni}/carta-aceptacion', [DashboardPostulanteController::class, 'carta_aceptacionPdf'])->middleware('can:dashboard_postulante')->name('postulantes.carta_aceptacion');
 Route::post('/postulantes/{dni}/convertir', [PostulanteController::class, 'convertirEnEstudiante'])->middleware('can:dashboard_secretario')->name('postulantes.convertir');
-
+Route::post('postulacion/{dni}/aceptar', [PostulanteController::class, 'acep_neg'])->where('dni', '.*')->name('postulantes.aceptar');
 //COHORTES DOCENTES
 Route::get('cohortes_docentes/create/{docente_dni}/{asignatura_id?}', [CohorteDocenteController::class, 'create'])
     ->middleware(['can:dashboard_secretario'])

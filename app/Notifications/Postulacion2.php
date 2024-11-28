@@ -43,7 +43,7 @@ class Postulacion2 extends Notification
     {
         return (new MailMessage)
         ->subject('¡Gracias por proporcionar tus datos!')
-        ->greeting('¡Hola ' . $this->postulante->nombre1 . $this->postulante->apellidop . '!')
+        ->greeting('¡Hola ' . $this->postulante->nombre1 . ' ' . $this->postulante->apellidop . '!')
         ->line('Hemos guardado tus archivos para competar la postulación.')
         ->action('Iniciar Sesión', route('login'))
         ->line('¡Gracias por unirte a nosotros!')

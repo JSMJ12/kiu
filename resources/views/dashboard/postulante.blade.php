@@ -143,7 +143,7 @@
                                     <input type="file" id="comprobante_pago" name="pago_matricula" class="form-control-file" accept=".pdf">
                                 </div>
                             @endif
-                            @if(is_null($postulante->pago_matricula) || is_null($postulante->carta_aceptacion) || is_null($postulante->pdf_cedula) || is_null($postulante->pdf_papelvotacion) || is_null($postulante->pdf_titulouniversidad) || is_null($postulante->pdf_hojavida) || ($postulante->discapacidad == 'Sí' && is_null($postulante->pdf_conadis)))
+                            @if((is_null($postulante->pago_matricula) && $postulante->status == true) || is_null($postulante->carta_aceptacion) || is_null($postulante->pdf_cedula) || is_null($postulante->pdf_papelvotacion) || is_null($postulante->pdf_titulouniversidad) || is_null($postulante->pdf_hojavida) || ($postulante->discapacidad == 'Sí' && is_null($postulante->pdf_conadis)))
                                 <div class="form-group text-center">
                                     <button type="submit" class="btn btn-primary">Guardar</button>
                                 </div>

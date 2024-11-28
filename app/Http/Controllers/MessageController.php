@@ -6,9 +6,7 @@ use App\Notifications\NewMessageNotification2;
 
 use Illuminate\Http\Request;
 use App\Models\Message;
-use App\Events\MessageUpdated;
-use RealRashid\SweetAlert\Facades\Alert;
-use Config;
+
 
 class MessageController extends Controller
 {
@@ -16,9 +14,9 @@ class MessageController extends Controller
     {
         $perPage = $request->input('perPage', 5);
         $messages = auth()->user()->receivedMessages()
-                                ->orderBy('created_at', 'desc') // Ordenar por fecha de envío en orden descendente
-                                ->with('sender', 'receiver') // Cargar las relaciones sender y receiver
-                                ->paginate($perPage); // Paginar los resultados
+            ->orderBy('created_at', 'desc') // Ordenar por fecha de envío en orden descendente
+            ->with('sender', 'receiver') // Cargar las relaciones sender y receiver
+            ->paginate($perPage); // Paginar los resultados
 
         return view('messages.index', compact('messages', 'perPage'));
     }
@@ -30,10 +28,11 @@ class MessageController extends Controller
 
     public function store(Request $request)
     {
+        // Validación de los datos
         $request->validate([
             'message' => 'required',
             'receiver_id' => 'required',
-            'attachment' => 'nullable|file|max:100240',
+            'attachment' => 'nullable|file|max:100240', // Max file size 100MB (100240 KB)
         ]);
 
         // Crear un nuevo mensaje
@@ -43,28 +42,30 @@ class MessageController extends Controller
             'message' => $request->input('message'),
         ]);
 
-        // Manejar la subida de archivos
+        // Manejar la subida de archivos adjuntos
         if ($request->hasFile('attachment')) {
             $attachmentPath = $request->file('attachment')->store('attachments', 'public');
             $message->attachment = $attachmentPath;
         }
 
         // Guardar el mensaje
-        
         $message->save();
-        
+
+        // Obtener el receptor
         $receiver = $message->receiver;
-        
+
+        // Enviar la notificación al receptor
         $receiver->notify(new NewMessageNotification2($message));
 
-        Alert::success('Mensaje enviado', 'El mensaje se envió correctamente');
-
+        // Contar los mensajes no leídos del receptor
         $unreadMessagesCount = Message::where('receiver_id', auth()->id())
-        ->whereNull('read_at')
-        ->count();
+            ->whereNull('read_at')
+            ->count();
 
-        return back();
+        // Retornar con un mensaje de éxito
+        return back()->with('success', 'El mensaje se envió correctamente');
     }
+
     public function destroy($id)
     {
         $message = Message::find($id);

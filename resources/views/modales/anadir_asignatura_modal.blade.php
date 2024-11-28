@@ -27,9 +27,10 @@
                         <input type="text" class="form-control" id="itinerario" name="itinerario">
                     </div>
                     <div class="form-group">
-                        <label for="itinerario">Unidad Curricular:</label>
+                        <label for="unidad_curricular">Unidad Curricular:</label>
                         <input type="text" class="form-control" id="unidad_curricular" name="unidad_curricular">
                     </div>
+
                     <input type="hidden" name="maestria_id" value="{{ $maestria->id }}">
                     <button type="submit" class="btn btn-primary">Agregar</button>
                 </form>

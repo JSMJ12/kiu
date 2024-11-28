@@ -22,7 +22,7 @@ class CohorteController extends Controller
 
         if ($user->hasRole('Administrador')) {
             // Si el usuario es administrador, muestra todos los cohortes
-            $cohortes = Cohorte::with(['maestria', 'periodo_academico', 'aula'])->paginate($perPage);
+            $cohortes = Cohorte::with(['maestria', 'periodo_academico', 'aula']);
         } else {
             // Si el usuario no es administrador, asume que es un secretario
             $secretario = Secretario::where('nombre1', $user->name)
@@ -35,13 +35,34 @@ class CohorteController extends Controller
 
             // Filtra los cohortes que pertenecen a esas maestrías
             $cohortes = Cohorte::with(['maestria', 'periodo_academico', 'aula'])
-                ->whereIn('maestria_id', $maestriasIds)
-                ->paginate($perPage);
+                ->whereIn('maestria_id', $maestriasIds);
         }
 
-        return view('cohortes.index', compact('cohortes', 'perPage'));
-    }
+        if ($request->ajax()) {
+            return datatables()->eloquent($cohortes)
+                ->addColumn('aula_nombre', function ($cohorte) {
+                    return $cohorte->aula && $cohorte->aula->nombre ? $cohorte->aula->nombre : 'No asignada';
+                })
+                ->addColumn('acciones', function ($cohorte) {
+                    return '
+                        <a href="' . route('cohortes.edit', $cohorte->id) . '" class="btn btn-outline-primary btn-sm" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="' . route('cohortes.destroy', $cohorte->id) . '" method="POST" style="display: inline-block;">
+                            ' . csrf_field() . '
+                            ' . method_field('DELETE') . '
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Eliminar" onclick="return confirm(\'¿Estás seguro de que deseas eliminar este cohorte?\');">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>';
+                })                
+                
+                ->rawColumns(['acciones'])
+                ->toJson();
+        }        
 
+        return view('cohortes.index', compact('perPage'));
+    }
 
     public function create()
     {
@@ -80,11 +101,11 @@ class CohorteController extends Controller
         ]);
 
         Cohorte::create($request->only([
-            'nombre', 
-            'maestria_id', 
-            'periodo_academico_id', 
-            'aula_id', 
-            'aforo', 
+            'nombre',
+            'maestria_id',
+            'periodo_academico_id',
+            'aula_id',
+            'aforo',
             'modalidad',
             'fecha_inicio',
             'fecha_fin',
@@ -129,7 +150,7 @@ class CohorteController extends Controller
             'fecha_inicio' => $request->input('fecha_inicio'),
             'fecha_fin' => $request->input('fecha_fin'),
         ]);
-        
+
 
         return redirect()->route('cohortes.index')->with('success', 'La cohorte ha sido actualizada exitosamente.');
     }
@@ -144,6 +165,5 @@ class CohorteController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('cohortes.index')->with('error', 'Error al eliminar el cohorte: ' . $e->getMessage());
         }
-
     }
 }

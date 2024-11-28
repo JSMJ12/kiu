@@ -39,7 +39,7 @@ return new class extends Migration
             $table->string('universidad_titulo')->nullable();
             $table->string('tipo_colegio')->nullable();
             $table->integer('cantidad_miembros_hogar')->nullable();
-            $table->decimal('ingreso_total_hogar', 10, 2)->nullable();
+            $table->string('ingreso_total_hogar')->nullable();
             $table->string('nivel_formacion_padre')->nullable();
             $table->string('nivel_formacion_madre')->nullable();
             $table->string('origen_recursos_estudios')->nullable();

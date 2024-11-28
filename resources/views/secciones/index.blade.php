@@ -14,7 +14,7 @@
                 <div class="card-tools">
                     <button type="button" class="btn btn-light btn-sm" data-toggle="modal" data-target="#createModal">
                         <i class="fas fa-plus"></i> Crear nueva
-                    </button>
+                    </button>                    
                 </div>
             </div>
             <div class="card-body">
@@ -94,6 +94,7 @@
             </div>
         </div>
     </div>
+    @include('modales.create_seccion_modal')
 @stop
 
 @section('css')

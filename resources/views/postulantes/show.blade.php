@@ -14,7 +14,7 @@
             </div>
             <div class="card-body text-center">
                 <div class="mb-4 text-center">
-                    <img src="{{ asset($postulante->imagen) }}" alt="Imagen de {{ $postulante->nombre1 }}" style="width: 200px; height: 200px; border-radius: 5px;">
+                    <img src="{{ asset('storage/' . $postulante->imagen) }}" alt="Imagen de {{ $postulante->nombre1 }}" style="width: 200px; height: 200px; border-radius: 5px;">
                 </div>
                 <div class="table-responsive">
                     <table class="table table-bordered">

@@ -28,7 +28,7 @@ class DashboardAlumnoController extends Controller
 
         // Eager load de relaciones necesarias
         $alumno->load([
-            'matriculas.asignatura.cohortes.aula.paralelo',
+            'matriculas.asignatura.cohortes.aula',
             'matriculas.asignatura.notas' => function ($query) use ($alumno) {
                 $query->where('alumno_dni', $alumno->dni);
             }

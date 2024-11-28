@@ -42,12 +42,11 @@
                                             <i class="fas fa-edit"></i>
                                         </a>
 
-                                        <!-- Formulario para eliminar -->
                                         <form id="delete-form-{{ $periodo_academico->id }}" action="{{ route('periodos_academicos.destroy', $periodo_academico->id) }}" method="POST" style="display: inline;">
                                             @csrf
                                             @method('DELETE')
-                                            <button class="btn btn-danger btn-sm btn-delete" data-id="{{ $periodo_academico->id }}" type="button">
-                                                <i class="fas fa-trash"></i> Eliminar
+                                            <button class="btn btn-danger btn-sm btn-delete" data-id="{{ $periodo_academico->id }}" type="button" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
                                     </td>

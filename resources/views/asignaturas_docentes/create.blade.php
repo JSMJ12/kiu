@@ -11,7 +11,7 @@
                 <div class="card-header" style="background-color: #28a745; color: white;">
                     <div class="row">
                         <div class="col-12 text-center mb-4" >
-                            <img src="{{ asset($docente->image) }}" alt="Imagen de {{ $docente->name }}" style="max-width: 150px; border-radius: 0.25rem;">
+                            <img src="{{ asset('storage/' . $docente->image) }}" alt="Imagen de {{ $docente->name }}" style="max-width: 150px; border-radius: 0.25rem;">
                             <h1 class="h3">{{ $docente->nombre1 }} {{ $docente->nombre2 }} {{ $docente->apellidop }} {{ $docente->apellidom }}</h1>
                         </div>
                     </div>

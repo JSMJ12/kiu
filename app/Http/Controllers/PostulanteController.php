@@ -8,13 +8,10 @@ use App\Models\Postulante;
 use App\Models\Maestria;
 use App\Models\Secretario;
 use App\Models\Alumno;
-use Illuminate\Support\Facades\File;
-use Spatie\Permission\Models\Role;
+use App\Notifications\MatriculaExito;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\NuevoUsuarioNotification;
-use Illuminate\Validation\Rule;
-use App\Events\PostulanteAceptado;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\PostulanteAceptadoNotification;
 
@@ -92,21 +89,32 @@ class PostulanteController extends Controller
             'CRÉDITO EDUCATIVO',
             'NO REGISTRA'
         ];
-        
-        return view('postulantes.create', compact('maestrias','provincias', 'tipo_colegio','ingreso_hogar','formacion_padre','origen_recursos'));
+
+        return view('postulantes.create', compact('maestrias', 'provincias', 'tipo_colegio', 'ingreso_hogar', 'formacion_padre', 'origen_recursos'));
     }
     public function store(Request $request)
     {
         $request->validate([
             'dni' => 'required|unique:postulantes',
             'correo_electronico' => 'required|email|unique:postulantes',
+            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
         $imagenPath = null;
+
+        // Inicializar el objeto Postulante
+        $postulante = new Postulante();
+
+        // Generar imagen de avatar o cargar la proporcionada
         if ($request->hasFile('imagen')) {
-            $imagePath = $request->file('imagen')->store('public/postulantes/imagen');
-            $imagenPath = asset(str_replace('public/', 'storage/', $imagePath));
+            $imagenPath = $request->file('imagen')->store('imagenes_usuarios', 'public');
+        } else {
+            $primeraLetra = substr($request->input('nombre1'), 0, 1);
+            $imagenPath = 'https://ui-avatars.com/api/?name=' . urlencode($primeraLetra);
         }
-        Postulante::create([
+
+        // Guardar el postulante
+        $postulante->fill([
             'dni' => $request->input('dni'),
             'apellidop' => $request->input('apellidop'),
             'apellidom' => $request->input('apellidom'),
@@ -136,44 +144,46 @@ class PostulanteController extends Controller
             'maestria_id' => $request->input('maestria_id'),
             'imagen' => $imagenPath,
         ]);
-        $usuario = new User;
+        $postulante->save();
+
+        // Crear el usuario asociado
+        $usuario = new User();
         $usuario->name = $request->input('nombre1');
         $usuario->apellido = $request->input('apellidop');
-        $sexo = $request->input('sexo');
-
-        if ($sexo == 'HOMBRE') {
-            $usuario->sexo = 'M';
-        } elseif ($sexo == 'MUJER') {
-            $usuario->sexo = 'F';
-        } 
-        $usuario->password = bcrypt($request->input('dni'));
+        $usuario->sexo = $request->input('sexo') === 'HOMBRE' ? 'M' : 'F';
+        $usuario->password = bcrypt($request->input('dni')); // Contraseña igual al DNI
         $usuario->status = $request->input('estatus', 'ACTIVO');
         $usuario->email = $request->input('correo_electronico');
         $usuario->image = $imagenPath;
-        $usuario->assignRole('Postulante');
         $usuario->save();
-        Notification::route('mail', $usuario->email)
-        ->notify(new NuevoUsuarioNotification($usuario, $request->input('dni'), $usuario->name));
-        Auth::login($usuario);
-        return redirect()->route('inicio')->with('success', 'Postulación realizada exitosamente.');
 
+        // Asignar rol y notificar al usuario
+        $usuario->assignRole('Postulante');
+
+        Notification::route('mail', $usuario->email)
+            ->notify(new NuevoUsuarioNotification($usuario, $request->input('dni'), $usuario->name));
+
+        // Autenticar al usuario
+        Auth::login($usuario);
+
+        return redirect()->route('inicio')->with('success', 'Postulación realizada exitosamente.');
     }
+
 
     public function show($dni)
     {
         $postulante = Postulante::findOrFail($dni);
-        
-        return view('postulantes.show', compact('postulante'));
 
+        return view('postulantes.show', compact('postulante'));
     }
     public function destroy($dni)
     {
         $postulante = Postulante::findOrFail($dni);
 
         $user = User::where('name', $postulante->nombre1)
-                    ->where('apellido', $postulante->apellidop)
-                    ->where('email', $postulante->correo_electronico)
-                    ->first();
+            ->where('apellido', $postulante->apellidop)
+            ->where('email', $postulante->correo_electronico)
+            ->first();
 
         if ($user) {
             $user->delete();
@@ -191,12 +201,12 @@ class PostulanteController extends Controller
         $postulante->save();
 
         $usuario = User::where('name', $postulante->nombre1)
-                    ->where('apellido', $postulante->apellidop)
-                    ->where('email', $postulante->correo_electronico)
-                    ->first();
+            ->where('apellido', $postulante->apellidop)
+            ->where('email', $postulante->correo_electronico)
+            ->first();
 
         if ($usuario) {
-            
+
             $usuario->notify(new PostulanteAceptadoNotification($postulante));
             return redirect()->back()->with('message', 'Postulante aceptado y notificación enviada.');
         } else {
@@ -209,11 +219,15 @@ class PostulanteController extends Controller
     {
         $postulante = Postulante::find($dni);
 
+        if (!$postulante) {
+            return redirect()->back()->with('error', 'El postulante no existe.');
+        }
+
         $rutaDirectorio = 'public/alumnos/pdf';
         if (!Storage::exists($rutaDirectorio)) {
             Storage::makeDirectory($rutaDirectorio);
         }
-       
+
         $pdf_cedula_path = $postulante->pdf_cedula;
         $pdf_papelvotacion_path = $postulante->pdf_papelvotacion;
         $pdf_titulouniversidad_path = $postulante->pdf_titulouniversidad;
@@ -221,8 +235,9 @@ class PostulanteController extends Controller
         $pdf_hojavida_path = $postulante->pdf_hojavida;
         $carta_aceptacion_path = $postulante->carta_aceptacion;
         $pago_matricula_path = $postulante->pago_matricula;
-        if ($postulante && $postulante->status) {
-            $email_institucional = strtolower($postulante->apellidop) . strtolower($postulante->nombre1) .'-'. substr($postulante->dni, -4) . '@unesum.edu.ec';
+
+        if ($postulante->status) {
+            $email_institucional = strtolower($postulante->apellidop) . strtolower($postulante->nombre1) . '-' . substr($postulante->dni, -4) . '@unesum.edu.ec';
 
             $estudiante = Alumno::create([
                 'dni' => $postulante->dni,
@@ -243,7 +258,7 @@ class PostulanteController extends Controller
                 'carnet_discapacidad' => $postulante->carnet_discapacidad,
                 'tipo_discapacidad' => $postulante->tipo_discapacidad,
                 'porcentaje_discapacidad' => $postulante->porcentaje_discapacidad,
-                'contra' => bcrypt($postulante->dni), 
+                'contra' => bcrypt($postulante->dni),
                 'image' => $postulante->imagen,
                 'maestria_id' => $postulante->maestria_id,
                 'celular' => $postulante->celular,
@@ -255,6 +270,7 @@ class PostulanteController extends Controller
                 'nivel_formacion_padre' => $postulante->nivel_formacion_padre,
                 'nivel_formacion_madre' => $postulante->nivel_formacion_madre,
                 'origen_recursos_estudios' => $postulante->origen_recursos_estudios,
+                'sexo'  => $postulante->sexo,
                 'pdf_cedula' => $pdf_cedula_path,
                 'pdf_papelvotacion' => $pdf_papelvotacion_path,
                 'pdf_titulouniversidad' => $pdf_titulouniversidad_path,
@@ -264,26 +280,28 @@ class PostulanteController extends Controller
                 'pago_matricula' => $pago_matricula_path,
                 'monto_total' => $postulante->maestria->arancel,
             ]);
+
             $user = User::where('name', $postulante->nombre1)
-                        ->where('apellido', $postulante->apellidop)
-                        ->where('email', $postulante->correo_electronico)
-                        ->first();
+                ->where('apellido', $postulante->apellidop)
+                ->where('email', $postulante->correo_electronico)
+                ->first();
+
             if ($user) {
+                \Log::info('Usuario encontrado', ['usuario' => $user->toArray()]);
                 $user->assignRole('Alumno');
                 $user->removeRole('Postulante');
-                
+
                 $user->email = $email_institucional;
                 $user->save();
-            }
-            Notification::route('mail', $user->email)
-            ->notify(new NuevoUsuarioNotification($usuario, $request->input('dni'), $usuario->name));
-            $postulante->delete();
 
+                Notification::route('mail', $user->email)
+                    ->notify(new MatriculaExito($user, $email_institucional, $user->name, $postulante->dni));
+            }
+
+            $postulante->delete();
             return redirect()->back()->with('success', 'El postulante ha sido convertido en estudiante.');
         }
 
         return redirect()->back()->with('error', 'El postulante no puede ser convertido en estudiante.');
     }
-
-
 }

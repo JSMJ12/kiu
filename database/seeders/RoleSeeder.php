@@ -23,6 +23,9 @@ class RoleSeeder extends Seeder
             ['id' => 5, 'name' => 'Postulante'],
             ['id' => 6, 'name' => 'Coordinador'],
             ['id' => 7, 'name' => 'Secretario/a EPSU'],
+            ['id' => 8, 'name' => 'Titulado_proceso'],
+            ['id' => 9, 'name' => 'Titulado'],
+            ['id' => 10, 'name' => 'Tutor'],
         ];
         
         // Crear o actualizar roles con IDs fijos
@@ -38,6 +41,9 @@ class RoleSeeder extends Seeder
         $role5 = Role::find(5);
         $role6 = Role::find(6);
         $role7 = Role::find(7);
+        $role8 = Role::find(8);
+        $role9 = Role::find(9);
+        $role10 = Role::find(10);
 
         // Crear permisos y sincronizar con roles
         Permission::create(['name' => 'dashboard_admin'])->syncRoles([$role1]);
@@ -69,5 +75,9 @@ class RoleSeeder extends Seeder
         Permission::create(['name' => 'alumno_pago'])->syncRoles([$role4]);
 
         Permission::create(['name' => 'dashboard_postulante'])->syncRoles([$role5]);
+
+        Permission::create(['name' => 'titulado_proceso'])->syncRoles([$role8]);
+        Permission::create(['name' => 'titulado'])->syncRoles([$role9]);
+        Permission::create(['name' => 'revisar_tesis'])->syncRoles([$role10]);
     }
 }

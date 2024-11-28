@@ -1,10 +1,13 @@
-<div class="modal fade" id="editarAulaModal-{{ $aula->id }}" tabindex="-1" aria-labelledby="editarAulaModalLabel-{{ $aula->id }}" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="editarAulaModal{{ $aula->id }}" tabindex="-1" aria-labelledby="editarAulaModalLabel{{ $aula->id }}" aria-hidden="true">
+    <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header" style="background-color: #003366; color: white;">
-                <h5 class="modal-title" id="editarAulaModalLabel-{{ $aula->id }}">Editar Aula</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="editarAulaModalLabel{{$aula->id }}">Editar Aula</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
+
             <div class="modal-body">
                 <form action="{{ route('aulas.update', $aula->id) }}" method="POST">
                     @csrf

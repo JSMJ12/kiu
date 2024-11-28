@@ -21,6 +21,7 @@ class NuevoUsuarioNotification extends Notification
         $this->nombre = $nombre;
     }
 
+
     /**
      * Get the notification's delivery channels.
      *
@@ -40,18 +41,18 @@ class NuevoUsuarioNotification extends Notification
      */
     public function toMail($notifiable)
     {
+        \Log::info('Generando notificación para: ' . $this->usuario->name);
         return (new MailMessage)
-        ->subject('¡Bienvenido a POSGRADO SGA!')
-        ->greeting('¡Hola ' . $this->usuario->name . '!')
-        ->line('Se ha creado una cuenta para ti en nuestra aplicación.')
-        ->line('Correo electrónico: ' . $this->usuario->email)
-        ->line('Contraseña temporal: ' . $this->contrasena)
-        ->line('Por motivos de seguridad, te recomendamos cambiar tu contraseña después de iniciar sesión.')
-        ->action('Iniciar Sesión', route('login'))
-        ->line('¡Gracias por unirte a nosotros!')
-        ->salutation('Regards, POSGRADOSGA');
-
+            ->subject('¡Bienvenido a POSGRADO SGA!')
+            ->greeting('¡Hola ' . $this->nombre . '!')
+            ->line('Se ha creado una cuenta para ti en nuestra aplicación.')
+            ->line('Correo electrónico: ' . $this->usuario->email)
+            ->line('Contraseña temporal: ' . $this->contrasena)
+            ->action('Iniciar Sesión', route('login'))
+            ->line('¡Gracias por unirte a nosotros!')
+            ->salutation('Regards, POSGRADOSGA');
     }
+
 
     /**
      * Get the array representation of the notification.

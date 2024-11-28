@@ -16,10 +16,10 @@
                 </div>
                 <div class="info-body text-center">
                     <!-- Imagen del Alumno -->
-                    <img src="{{ asset($alumno->image) }}" alt="Foto del Alumno" class="img-fluid rounded-circle mb-3">
+                    <img src="{{ asset('storage/'. $alumno->image) }}" alt="Foto del Alumno" class="img-fluid rounded-circle mb-3">
                     <!-- Detalles del Alumno -->
                     <p><strong>Nombre:</strong> {{ $alumno->nombre1 }} {{ $alumno->apellido_paterno }}</p>
-                    <p><strong>DNI:</strong> {{ $alumno->dni }}</p>
+                    <p><strong>Cedula-Pasaporte:</strong> {{ $alumno->dni }}</p>
                     <p><strong>Maestría:</strong> {{ $programa['nombre'] }}</p>
                     <p><strong>Arancel:</strong> ${{ number_format($programa['arancel'], 2) }}</p>
                     <p><strong>Deuda Total:</strong> ${{ number_format($alumno->monto_total, 2) }}</p>

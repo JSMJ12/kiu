@@ -14,6 +14,7 @@ class Docente extends Model
     protected $fillable = [
         'nombre1',
         'nombre2',
+        'email',
         'apellidop',
         'apellidom',
         'contra',

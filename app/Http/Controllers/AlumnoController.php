@@ -18,22 +18,90 @@ class AlumnoController extends Controller
 
     public function index(Request $request)
     {
-        $perPage = $request->input('perPage', 10);
-        $user = auth()->user();
+        // Verificar si la solicitud es AJAX para DataTables
+        if ($request->ajax()) {
+            $user = auth()->user();
 
-        if ($user->hasRole('Administrador')) {
-            $alumnos = Alumno::all();
-        } else {
-            $secretario = Secretario::where('nombre1', $user->name)
-                ->where('apellidop', $user->apellido)
-                ->where('email', $user->email)
-                ->firstOrFail();
-            $maestriasIds = $secretario->seccion->maestrias->pluck('id');
-            $alumnos = Alumno::whereIn('maestria_id', $maestriasIds)->get();
+            // Filtrar los alumnos según el rol del usuario
+            if ($user->hasRole('Administrador')) {
+                $query = Alumno::with('maestria');
+            } else {
+                $secretario = Secretario::where('nombre1', $user->name)
+                    ->where('apellidop', $user->apellido)
+                    ->where('email', $user->email)
+                    ->firstOrFail();
+                $maestriasIds = $secretario->seccion->maestrias->pluck('id');
+                $query = Alumno::whereIn('maestria_id', $maestriasIds);
+            }
+
+            // Configurar DataTables con las columnas necesarias
+            return datatables()->eloquent($query)
+                ->addColumn('maestria_nombre', function ($alumno) {
+                    return $alumno->maestria ? $alumno->maestria->nombre : 'Sin Maestría';
+                })
+                ->addColumn('foto', function ($alumno) {
+                    return '<img src="' . asset('storage/' . $alumno->image) . '" alt="Foto de ' . $alumno->nombre1 . '" style="max-width: 60px; border-radius: 50%;">';
+                })
+                ->addColumn('nombre_completo', function ($alumno) {
+                    return "{$alumno->nombre1}<br>{$alumno->nombre2}<br>{$alumno->apellidop}<br>{$alumno->apellidom}";
+                })
+                ->addColumn('acciones', function ($alumno) {
+                    $acciones = '<div style="display: flex; gap: 10px; align-items: center;">';
+
+                    // Botón Ver Matrícula
+                    $acciones .= '<button type="button" class="btn btn-outline-info btn-sm view-matriculas" 
+                                data-id="' . $alumno->dni . '" 
+                                data-matriculas=\'' . json_encode($alumno->matriculas->map(function ($matricula) {
+                        return [
+                            'asignatura' => $matricula->asignatura->nombre ?? 'No disponible',
+                            'docente' => $matricula->docente
+                                ? $matricula->docente->nombre1 . ' ' . $matricula->docente->apellidop
+                                : 'No disponible',
+                            'cohorte' => $matricula->cohorte->nombre ?? 'No disponible',
+                            'aula' => $matricula->cohorte->aula->nombre ?? 'No disponible',
+                            'paralelo' => $matricula->cohorte->aula->paralelo ?? 'No disponible',
+                        ];
+                    })) . '\' title="Ver Matrícula">
+                                <i class="fas fa-eye"></i>
+                              </button>';
+
+                    // Botón Editar (solo para administradores)
+                    if (auth()->user()->can('dashboard_admin')) {
+                        $acciones .= '<a href="' . route('alumnos.edit', $alumno->dni) . '" class="btn btn-outline-primary btn-sm" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                  </a>';
+                    }
+
+                    // Botón Matricular
+                    if ($alumno->maestria->cohorte->count() > 0 && $alumno->matriculas->count() == 0) {
+                        $acciones .= '<a href="' . url('/matriculas/create', $alumno->dni) . '" class="btn btn-outline-success btn-sm" title="Matricular">
+                                    <i class="fas fa-plus-circle"></i>
+                                  </a>';
+                    }
+
+                    // Botón Record Académico
+                    if ($alumno->notas->count() > 0 && $alumno->maestria->asignaturas->count() > 0 && $alumno->notas->count() == $alumno->maestria->asignaturas->count()) {
+
+                        $acciones .= '<a href="' . route('record.show', $alumno->dni) . '" class="btn btn-outline-warning btn-sm" title="Record Académico">
+                                    <i class="fas fa-file-alt"> </i>
+                                  </a>';
+                    }
+                    // Botón Calificar (solo para administradores)
+                    if (auth()->user()->can('dashboard_admin')) {
+                        $acciones .= '<a href="' . url('/notas/create', $alumno->dni) . '" class="btn btn-outline-info btn-sm" title="Calificar">
+                                    <i class="fas fa-pencil-alt"></i>
+                                  </a>';
+                    }
+
+                    $acciones .= '</div>';
+                    return $acciones;
+                })
+                ->rawColumns(['foto', 'acciones', 'nombre_completo']) // Permitir HTML en estas columnas
+                ->toJson();
         }
-        
 
-        return view('alumnos.index', compact('alumnos', 'perPage'));
+        // Retornar la vista si no es una solicitud AJAX
+        return view('alumnos.index');
     }
 
     public function create()
@@ -61,12 +129,12 @@ class AlumnoController extends Controller
     {
         $request->validate([
             'maestria_id' => 'required|exists:maestrias,id',
-            'image' => 'nullable|image|max:2048', // máximo tamaño 2MB
+            'image' => 'nullable|image|max:2048',
         ]);
 
         // Obtener el ID de la maestría
         $maestriaId = $request->input('maestria_id');
-        
+
         // Obtener la maestría y su arancel
         $maestria = Maestria::findOrFail($maestriaId);
         $arancel = $maestria->arancel;
@@ -103,12 +171,15 @@ class AlumnoController extends Controller
         // Procesar la imagen
         $primeraLetra = substr($alumno->nombre1, 0, 1);
         if ($request->hasFile('image')) {
-            $image = $request->file('image')->store('public/imagenes_usuarios');
-            $alumno->image = url(str_replace('public/', 'storage/', $image));
+            $path = $request->file('image')->store('imagenes_usuarios', 'public');
+            $alumno->image = $path;
         } else {
             $alumno->image = 'https://ui-avatars.com/api/?name=' . urlencode($primeraLetra);
         }
 
+        if (!$alumno->registro) {
+            $alumno->registro = Alumno::getNextRegistro();
+        }
         // Almacenar el alumno
         $alumno->save();
 
@@ -140,7 +211,7 @@ class AlumnoController extends Controller
     {
         // Obtener el ID de la maestría
         $maestriaId = $request->input('maestria_id');
-        
+
         // Obtener la maestría y su arancel
         $maestria = Maestria::findOrFail($maestriaId);
         $arancel = $maestria->arancel;
@@ -165,7 +236,16 @@ class AlumnoController extends Controller
         $alumno->porcentaje_discapacidad = $request->input('porcentaje_discapacidad');
         $alumno->sexo = $request->input('sexo');
         $alumno->maestria_id = $request->input('maestria_id');
-        $alumno->monto_total = $arancel; 
+        $alumno->monto_total = $arancel;
+        if ($request->hasFile('image')) {
+            // Eliminar la imagen anterior si existe
+            if ($alumno->image) {
+                \Storage::disk('public')->delete($alumno->image);
+            }
+
+            $path = $request->file('image')->store('imagenes_usuarios', 'public');
+            $alumno->image = $path;
+        }
         $alumno->save();
 
         return redirect()->route('alumnos.index')->with('success', 'Alumno actualizado correctamente');

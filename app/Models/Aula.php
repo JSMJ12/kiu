@@ -12,13 +12,9 @@ class Aula extends Model
         'nombre',
         'piso',
         'codigo',
-        'paralelos_id',
+        'paralelo',
     ];
 
-    public function paralelo()
-    {
-        return $this->belongsTo(Paralelo::class, 'paralelos_id');
-    }
     public function cohortes()
     {
         return $this->hasMany(Cohorte::class);

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Models\Maestria;
 use App\Models\Seccion;
+
 class SeccionController extends Controller
 {
     public function __construct()
@@ -72,5 +73,11 @@ class SeccionController extends Controller
         $seccion->delete();
 
         return redirect()->route('secciones.index')->with('success', 'Sección eliminada exitosamente');
+    }
+
+    public function show($id)
+    {
+        $seccion = Seccion::with('maestrias')->findOrFail($id);
+        return response()->json($seccion);
     }
 }

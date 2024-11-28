@@ -7,6 +7,7 @@ use App\Models\Nota;
 use App\Models\Asignatura;
 use App\Models\Alumno;
 use App\Models\Matricula;
+use App\Models\User;
 
 class NotaController extends Controller
 {
@@ -25,15 +26,15 @@ class NotaController extends Controller
     public function create($alumno_dni)
     {
         $alumno = Alumno::findOrFail($alumno_dni);
+
         $matriculas = $alumno->matriculas;
-        $asignaturas = collect();
-        foreach ($matriculas as $matricula) {
-            $cohorte = $matricula->cohorte;
-            $asignaturas = $asignaturas->merge($cohorte->asignaturas);
-        }
+        $asignaturas = $matriculas->map(function ($matricula) {
+            return $matricula->asignatura;
+        })->unique('id');
 
         return view('notas.create', compact('alumno', 'asignaturas'));
     }
+
     public function store(Request $request)
     {
         $alumno_dni = $request->input('alumno_dni');
@@ -51,7 +52,7 @@ class NotaController extends Controller
 
             $matricula = Matricula::where('alumno_dni', $alumno_dni)
                 ->where('asignatura_id', $asignatura_id)
-                ->whereHas('cohorte', function($query) use ($docente_dni) {
+                ->whereHas('cohorte', function ($query) use ($docente_dni) {
                     $query->where('docente_dni', $docente_dni);
                 })
                 ->firstOrFail();
@@ -76,6 +77,25 @@ class NotaController extends Controller
                 ]
             );
         }
+        if (
+            $alumno->notas->count() > 0 &&
+            $alumno->maestria->asignaturas->count() > 0 &&
+            $alumno->notas->count() == $alumno->maestria->asignaturas->count()
+        ) {
+            // Buscar el usuario asociado al alumno por email institucional
+            $usuario = User::where('email', $alumno->email_institucional)->first();
+
+            if ($usuario) {
+                // Verificar si el usuario no tiene el rol antes de asignarlo
+                if (!$usuario->hasRole('Titulado_proceso')) {
+                    $usuario->assignRole('Titulado_proceso');
+                }
+            } else {
+                // Opcional: manejar el caso en que no se encuentre el usuario
+                \Log::warning("Usuario con email {$alumno->email_institucional} no encontrado.");
+            }
+        }
+
 
         return redirect()->route('notas.show', $alumno_dni)->with('success', 'Notas guardadas exitosamente');
     }
@@ -88,4 +108,3 @@ class NotaController extends Controller
             ->with('success', 'Nota eliminada exitosamente.');
     }
 }
-

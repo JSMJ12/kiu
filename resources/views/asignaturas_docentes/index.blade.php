@@ -22,7 +22,7 @@
                             @foreach ($docentes as $docente)
                                 <tr>
                                     <td class="text-center">
-                                        <img src="{{ asset($docente->image) }}" alt="Imagen de {{ $docente->name }}" style="max-width: 60px; border-radius: 50%;">
+                                        <img src="{{ asset('storage/' . $docente->image) }}" alt="Imagen de {{ $docente->name }}" style="max-width: 60px; border-radius: 50%;">
                                     </td>
                                     <td>{{ $docente->nombre1 }} {{ $docente->nombre2 }} {{ $docente->apellidop }} {{ $docente->apellidom }}</td>
                                     <td>
