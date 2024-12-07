@@ -77,7 +77,6 @@ class PerfilAlumnoController extends Controller
 
     public function update(Request $request)
     {
-        dd($request);
         $request->validate([
             'estado_civil' => 'nullable|string|max:50',
             'provincia' => 'nullable|string|max:100',
@@ -107,15 +106,16 @@ class PerfilAlumnoController extends Controller
         $alumno->update($request->except(['image']));
 
         if ($request->hasFile('image')) {
-            $image = $request->file('image')->store('public/alumnos/imagen');
-            $imagePath = url(str_replace('public/', 'storage/', $image));
-            $alumno->image = $imagePath;
-            $user->image = $imagePath;
-            $user->save();
-        }
+            // Eliminar la imagen anterior si existe
+            if ($alumno->image) {
+                \Storage::disk('public')->delete($alumno->image);
+            }
 
+            $path = $request->file('image')->store('imagenes_usuarios', 'public');
+            $alumno->image = $path;
+        }
         $alumno->save();
 
-        return redirect()->route('inicio')->with('success', 'Perfil actualizado con éxito.');
+        return redirect()->route('edit_datosAlumnos')->with('success', 'Perfil actualizado con éxito.');
     }
 }

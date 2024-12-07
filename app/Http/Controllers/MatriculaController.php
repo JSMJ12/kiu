@@ -21,26 +21,25 @@ class MatriculaController extends Controller
     {
         $alumno = Alumno::where('dni', $alumno_dni)->firstOrFail();
         $maestria = Maestria::findOrFail($alumno->maestria_id);
-        $cohortes = $maestria->cohorte;
-        $cohortes = $maestria->cohorte;
-        $cohortesActivos = $cohortes->filter(function ($cohorte) {
-            return $cohorte->periodo_academico->status == 'ACTIVO';
+
+        // Filtrar cohortes con aforo mayor a 0
+        $cohortes = $maestria->cohorte->filter(function ($cohorte) {
+            return $cohorte->aforo > 0;
         });
-        $cohortes = $cohortesActivos;
-        
+
         // Verificar si el alumno ya está matriculado en alguna asignatura de este cohorte
         $estaMatriculado = $this->verificarMatriculacion($alumno);
 
         if ($estaMatriculado) {
             return redirect()->back()->with('error', 'El alumno ya está matriculado en este cohorte.');
         }
+
         return view('matriculas.create', compact('alumno', 'cohortes'));
     }
 
-
     private function verificarMatriculacion($alumno)
     {
-        $dni= $alumno->dni;
+        $dni = $alumno->dni;
         // Verificar si el alumno está matriculado en alguna asignatura de este cohorte
         return $alumno->matriculas()->where('alumno_dni', $dni)->exists();
     }
@@ -61,11 +60,11 @@ class MatriculaController extends Controller
                 foreach ($asignatura_ids as $key => $asignatura_id) {
                     // Verificar si ya existe una matrícula con los mismos datos
                     $matriculaExistente = Matricula::where('alumno_dni', $alumno_dni)
-                                                    ->where('asignatura_id', $asignatura_id)
-                                                    ->where('cohorte_id', $cohorte_id)
-                                                    ->where('docente_dni', $docente_dnis[$key])
-                                                    ->first();
-                
+                        ->where('asignatura_id', $asignatura_id)
+                        ->where('cohorte_id', $cohorte_id)
+                        ->where('docente_dni', $docente_dnis[$key])
+                        ->first();
+
                     // Crear la matrícula solo si no existe una con los mismos datos
                     if (!$matriculaExistente) {
                         Matricula::create([

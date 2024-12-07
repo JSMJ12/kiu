@@ -17,7 +17,7 @@
                         <i class="fa fa-users"></i>
                     </div>
                     <a href="{{ route('usuarios.index') }}" class="small-box-footer">
-                         <i class="fa fa-arrow-circle-right"></i>
+                        <i class="fa fa-arrow-circle-right"></i>
                     </a>
                 </div>
             </div>
@@ -32,7 +32,7 @@
                         <i class="fa fa-chalkboard-teacher"></i>
                     </div>
                     <a href="{{ route('docentes.index') }}" class="small-box-footer">
-                         <i class="fa fa-arrow-circle-right"></i>
+                        <i class="fa fa-arrow-circle-right"></i>
                     </a>
                 </div>
             </div>
@@ -47,7 +47,7 @@
                         <i class="fa fa-user-tie"></i>
                     </div>
                     <a href="{{ route('secretarios.index') }}" class="small-box-footer">
-                         <i class="fa fa-arrow-circle-right"></i>
+                        <i class="fa fa-arrow-circle-right"></i>
                     </a>
                 </div>
             </div>
@@ -62,7 +62,7 @@
                         <i class="fa fa-user-graduate"></i>
                     </div>
                     <a href="{{ route('alumnos.index') }}" class="small-box-footer">
-                         <i class="fa fa-arrow-circle-right"></i>
+                        <i class="fa fa-arrow-circle-right"></i>
                     </a>
                 </div>
             </div>
@@ -77,7 +77,7 @@
                         <i class="fa fa-graduation-cap"></i>
                     </div>
                     <a href="{{ route('maestrias.index') }}" class="small-box-footer">
-                         <i class="fa fa-arrow-circle-right"></i>
+                        <i class="fa fa-arrow-circle-right"></i>
                     </a>
                 </div>
             </div>
@@ -92,7 +92,7 @@
                         <i class="fa fa-user-tie"></i>
                     </div>
                     <a href="{{ route('postulaciones.index') }}" class="small-box-footer">
-                         <i class="fa fa-arrow-circle-right"></i>
+                        <i class="fa fa-arrow-circle-right"></i>
                     </a>
                 </div>
             </div>
@@ -118,32 +118,32 @@
                     </div>
                 </div>
             </div>
-        </div>        
+        </div>
     </div>
 @endsection
 
 @section('js')
     <script>
-        // Datos para el gráfico de matriculados por maestría
-        var matriculadosNames = {!! $matriculadosPorMaestria->pluck('nombre') !!};
-        var matriculadosValues = {!! $matriculadosPorMaestria->pluck('alumnos_count') !!};
+        // Datos del gráfico
+        var matriculadosIds = {!! $matriculadosPorMaestria->pluck('nombre') !!}; // IDs de las maestrías
+        var matriculadosValues = {!! $matriculadosPorMaestria->pluck('alumnos_count') !!}; // Cantidad de alumnos matriculados
 
         var matriculadosData = {
-            labels: matriculadosNames,
+            labels: matriculadosIds, // Usamos los IDs de las maestrías como etiquetas
             datasets: [{
                 label: 'Cantidad de Alumnos Matriculados',
                 data: matriculadosValues,
-                backgroundColor: matriculadosValues.map((_, index) => {
-                    const gradient = document.createElement('canvas').getContext('2d')
-                        .createLinearGradient(0, 0, 0, 400);
-                    gradient.addColorStop(0, 'rgba(54, 162, 235, 0.8)');
-                    gradient.addColorStop(1, 'rgba(54, 162, 235, 0.2)');
-                    return gradient;
+                backgroundColor: matriculadosValues.map(() => {
+                    // Generamos colores aleatorios para cada barra
+                    return `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 0.8)`;
                 }),
-                borderColor: matriculadosValues.map(() => 'rgba(54, 162, 235, 1)'),
-                borderWidth: 2,
-                hoverBorderColor: 'rgba(255, 255, 255, 1)',
-                hoverBackgroundColor: matriculadosValues.map(() => 'rgba(54, 162, 235, 0.9)')
+                borderColor: matriculadosValues.map(() => 'rgba(0, 0, 0, 0.2)'), // Borde suave en negro
+                borderWidth: 1, // Grosor del borde
+                hoverBackgroundColor: matriculadosValues.map(() => {
+                    // Fondo más oscuro al pasar el mouse
+                    return `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 0.9)`;
+                }),
+                hoverBorderColor: 'rgba(255, 255, 255, 1)' // Borde blanco al pasar el mouse
             }]
         };
 
@@ -153,16 +153,16 @@
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.1)', // Líneas sutiles y modernas
+                        color: 'rgba(200, 200, 200, 0.3)', // Líneas suaves y modernas
                         borderDash: [5, 5], // Líneas punteadas
                     },
                     ticks: {
-                        color: 'black', // Color de las etiquetas
+                        color: 'black', // Color de las etiquetas del eje Y
                     }
                 },
                 x: {
                     ticks: {
-                        color: 'black', // Color de las etiquetas
+                        color: 'black', // Color de las etiquetas del eje X (IDs)
                     },
                     grid: {
                         display: false, // Sin líneas verticales para un diseño más limpio
@@ -174,17 +174,17 @@
                     display: false // Ocultamos la leyenda para un diseño minimalista
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)', // Color más moderno y transparente para el tooltip
+                    backgroundColor: 'rgba(54, 162, 235, 0.8)', // Color del tooltip
                     titleFont: {
                         family: 'Roboto',
-                        size: 16,
+                        size: 14,
                         weight: 'bold',
-                        color: '#fff'
+                        color: '#fff' // Texto blanco en el tooltip
                     },
                     bodyFont: {
                         family: 'Roboto',
-                        size: 14,
-                        color: '#fff'
+                        size: 12,
+                        color: '#fff' // Texto blanco en el tooltip
                     }
                 }
             }

@@ -3,81 +3,93 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
 use App\Models\Pago;
+use Carbon\Carbon;
 
 class DashboardSecretarioEpsuController extends Controller
-{   public function __construct()
+{
+    public function __construct()
     {
         $this->middleware('auth');
     }
-    
+
     public function index(Request $request)
     {
-        $perPage = $request->input('perPage', 10);
-        $hoy = now()->startOfDay();
-        $mes = now()->startOfMonth();
-        $anio = now()->startOfYear();
-    
-        // Todos los pagos
-        $todosPagos = Pago::with('alumno.matriculas')->orderBy('fecha_pago')->get();
-    
-        // Pagos agrupados por cohorte
-        $pagosPorCohorte = $todosPagos->groupBy(function($pago) {
-            return optional($pago->alumno->matriculas->first())->cohorte_id;
+        $hoy = Carbon::today();
+        $mes = Carbon::now()->startOfMonth();
+        $anio = Carbon::now()->startOfYear();
+
+        $pagos = Pago::with(['alumno.maestria'])
+            ->where('verificado', '1')
+            ->orderBy('fecha_pago')
+            ->get();
+
+        $pagosPorCohorte = $pagos->groupBy(function ($pago) {
+            $cohorte = optional($pago->alumno->matriculas->first())->cohorte;
+            return $cohorte ? $cohorte->nombre : 'Sin Cohorte'; 
         });
-        // Monto de pagos por cohorte
+
         $montoPorCohorte = $pagosPorCohorte->map->sum('monto');
-        
-        // Cantidad de pagos por cohorte
+
         $cantidadPorCohorte = $pagosPorCohorte->map->count();
-    
-        // Pagos por hora del día
-        $pagosPorHora = $todosPagos->where('fecha_pago', '>=', $hoy)->groupBy(function($pago) {
-            return \Carbon\Carbon::parse($pago->fecha_pago)->format('H:00');
-        })->map->sum('monto');
-    
-        // Pagos por día del mes
-        $pagosPorDia = $todosPagos->where('fecha_pago', '>=', $mes)->groupBy(function($pago) {
-            return \Carbon\Carbon::parse($pago->fecha_pago)->format('d');
-        })->map->sum('monto');
-    
-        // Pagos por mes del año
-        $pagosPorMes = $todosPagos->where('fecha_pago', '>=', $anio)->groupBy(function($pago) {
-            return \Carbon\Carbon::parse($pago->fecha_pago)->format('F');
-        })->map->sum('monto');
-    
-        // Cantidad de pagos realizados
-        $cantidadPorHora = $todosPagos->where('fecha_pago', '>=', $hoy)->groupBy(function($pago) {
-            return \Carbon\Carbon::parse($pago->fecha_pago)->format('H:00');
-        })->map->count();
-    
-        $cantidadPorDia = $todosPagos->where('fecha_pago', '>=', $mes)->groupBy(function($pago) {
-            return \Carbon\Carbon::parse($pago->fecha_pago)->format('d');
-        })->map->count();
-    
-        $cantidadPorMes = $todosPagos->where('fecha_pago', '>=', $anio)->groupBy(function($pago) {
-            return \Carbon\Carbon::parse($pago->fecha_pago)->format('F');
-        })->map->count();
-    
-        // Pagos por verificar
+        
+        $pagosPorMaestria = $pagos->groupBy(function ($pago) {
+            return $pago->alumno->maestria->nombre ?? 'Sin Maestría';
+        });
+
+        $montoPorMaestria = $pagosPorMaestria->map->sum('monto');
+        $cantidadPorMaestria = $pagosPorMaestria->map->count();
+
+        $pagosPorDia = $pagos->filter(function ($pago) use ($hoy) {
+            return Carbon::parse($pago->fecha_pago)->isToday();
+        })->sum('monto');        
+        $pagosPorMes = $pagos->where('fecha_pago', '>=', $mes)->sum('monto');
+        $pagosPorAnio = $pagos->where('fecha_pago', '>=', $anio)->sum('monto');
+
+        $cantidadPorDia = $pagos->filter(function ($pago) use ($hoy) {
+            return \Carbon\Carbon::parse($pago->fecha_pago)->isToday();
+        })->count();
+        
+        $cantidadPorMes = $pagos->where('fecha_pago', '>=', $mes)->count();
+        $cantidadPorAnio = $pagos->where('fecha_pago', '>=', $anio)->count();
+
         $pagosPorVerificar = Pago::where('verificado', false)->count();
-    
-        return view('pagos.index', [
-            'pagosPorHora' => $pagosPorHora,
+
+        $alumnosPendientes = Pago::where('verificado', false)
+            ->with('alumno')
+            ->get()
+            ->unique('alumno_id');
+
+        if ($request->ajax()) {
+            return response()->json([
+                'pagosPorDia' => $pagosPorDia,
+                'pagosPorMes' => $pagosPorMes,
+                'pagosPorAnio' => $pagosPorAnio,
+                'montoPorMaestria' => $montoPorMaestria,
+                'cantidadPorMaestria' => $cantidadPorMaestria,
+                'cantidadPorDia' => $cantidadPorDia,
+                'cantidadPorMes' => $cantidadPorMes,
+                'cantidadPorAnio' => $cantidadPorAnio,
+                'pagosPorVerificar' => $pagosPorVerificar,
+                'alumnosPendientes' => $alumnosPendientes,
+                'montoPorCohorte' => $montoPorCohorte,
+                'cantidadPorCohorte' => $cantidadPorCohorte,
+            ]);
+        }
+
+        return view('dashboard.secretario_epsu', [
             'pagosPorDia' => $pagosPorDia,
             'pagosPorMes' => $pagosPorMes,
-            'todosPagos' => $todosPagos,
-            'cantidadPorHora' => $cantidadPorHora,
+            'pagosPorAnio' => $pagosPorAnio,
+            'montoPorMaestria' => $montoPorMaestria,
+            'cantidadPorMaestria' => $cantidadPorMaestria,
             'cantidadPorDia' => $cantidadPorDia,
             'cantidadPorMes' => $cantidadPorMes,
+            'cantidadPorAnio' => $cantidadPorAnio,
             'pagosPorVerificar' => $pagosPorVerificar,
-            'alumnosPendientes' => Pago::where('verificado', false)->with('alumno')->get()->unique('alumno_id'),
+            'alumnosPendientes' => $alumnosPendientes,
             'montoPorCohorte' => $montoPorCohorte,
             'cantidadPorCohorte' => $cantidadPorCohorte,
-        ], compact('perPage'));
+        ]);
     }
-    
-
 }

@@ -121,8 +121,8 @@
                                     <div class="form-group">
                                         <label for="sexo">Sexo:</label>
                                         <select name="sexo" class="form-control" required>
-                                            <option value="HOMBRE">Hombre</option>
-                                            <option value="MUJER">Mujer</option>
+                                            <option value="M">Hombre</option>
+                                            <option value="F">Mujer</option>
                                         </select>
                                     </div>
                                     <br>

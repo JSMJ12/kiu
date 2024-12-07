@@ -51,52 +51,6 @@
                     </ul>
                 </div>
             </div>
-            <div class="card mt-3">
-                <div class="card-header bg-info text-white">
-                    <h2>Notas</h2>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered" id="nota">
-                            <thead>
-                                <tr>
-                                    <th>Docente</th>
-                                    <th>Aula</th>
-                                    <th>Paralelo</th>
-                                    <th>Asignatura</th>
-                                    <th>Actividades de Aprendizaje</th>
-                                    <th>Prácticas de Aplicación</th>
-                                    <th>Aprendizaje Autónomo</th>
-                                    <th>Examen Final</th>
-                                    <th>Recuperación</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($notas as $asignatura => $nota)
-                                    <tr>
-                                        <td>
-                                            <div style="display: flex; align-items: center;">
-                                                <img src="{{ $nota['docente_image'] }}" alt="Imagen del Docente" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">
-                                                <span>{{ $nota['docente'] }}</span>
-                                            </div>
-                                        </td>
-                                        <td>{{ $nota['aula'] }}</td>
-                                        <td>{{ $nota['paralelo'] }}</td>
-                                        <td>{{ $asignatura }}</td>
-                                        <td>{{ $nota['actividades_aprendizaje'] }}</td>
-                                        <td>{{ $nota['practicas_aplicacion'] }}</td>
-                                        <td>{{ $nota['aprendizaje_autonomo'] }}</td>
-                                        <td>{{ $nota['examen_final'] }}</td>
-                                        <td>{{ $nota['recuperacion'] }}</td>
-                                        <td>{{ $nota['total'] }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>

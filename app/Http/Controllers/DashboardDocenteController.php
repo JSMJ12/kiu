@@ -3,15 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Docente;
 use App\Models\Alumno;
-use App\Models\CohorteDocente;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\AlumnosExport;
 use App\Models\Nota;
 use App\Models\Asignatura;
 use App\Models\CalificacionVerificacion;
+use App\Models\Aula;
 use Illuminate\Support\Facades\Storage;
 
 class DashboardDocenteController extends Controller
@@ -171,7 +170,7 @@ class DashboardDocenteController extends Controller
         $asignatura = $primerAlumno ? $primerAlumno->matriculas->first()->asignatura->nombre : 'sin_asignatura';
 
         $aula = $aulaId ? Aula::find($aulaId)->nombre : 'sin_aula';
-        $paralelo = $paraleloId ? Paralelo::find($paraleloId)->nombre : 'sin_paralelo';
+        $paralelo =  $aulaId ? Aula::find($aulaId)->nombre->paralelo: 'sin_paralelo';
 
         return Excel::download(new AlumnosExport($alumnosMatriculados), "alumnos_{$nombreCohorte}_{$asignatura}_{$aula}_{$paralelo}.xlsx");
     }

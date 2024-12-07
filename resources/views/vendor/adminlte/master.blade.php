@@ -72,6 +72,12 @@
         <meta name="msapplication-TileColor" content="#ffffff">
         <meta name="msapplication-TileImage" content="{{ asset('favicon/ms-icon-144x144.png') }}">
     @endif
+    <style>
+        .content-header h1 {
+            color: black;
+            font-family: "Times New Roman", Times, serif;
+        }
+    </style>
 
 </head>
 

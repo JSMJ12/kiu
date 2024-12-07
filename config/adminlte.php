@@ -311,10 +311,23 @@ return [
         ['header' => 'Coordinación', 'can' => 'dashboard_coordinador'],
         [
             'text' => 'Coordinación de Mestria',
-            'route'  => 'usuarios.index',
+            'route'  => 'dashboard_coordinador',
             'icon' => 'fas fa-fw fa-home',
             'can' => 'dashboard_coordinador'
             
+        ],
+        [
+            'text' => 'Solicitudes de Tesis',
+            'route'  => 'tesis.index',
+            'icon' => 'fas fa-fw fa-graduation-cap',
+            'can' => 'dashboard_coordinador'
+        ],
+        ['header' => 'Tutoriias de Tesis', 'can' => 'revisar_tesis'],
+        [
+            'text' => 'Tutorias',
+            'route'  => 'tutorias.index',
+            'icon' => 'fas fa-fw fa-chalkboard-teacher',
+            'can' => 'revisar_tesis'
         ],
         [
             'text' => 'Usuarios',
@@ -347,10 +360,22 @@ return [
             'can' => 'alumno_descuento', 
         ],
         [
+            'text' => 'Notas',
+            'route'  => 'dashboard_alumno.notas',
+            'icon' => 'far fa-fw fa-file-alt',
+            'can' => 'dashboard_alumno'
+        ],
+        [
             'text' => 'Descuento',
-            'route' => 'pago.descuento.form',
-            'icon' => 'fas fa-fw fa-dollar-sign',
-            'can' => 'alumno_descuento', 
+            'route' => 'descuentos.alumnos',
+            'icon' => 'fa fa-percent',
+            'can' => 'dashboard_secretario_epsu', 
+        ],
+        [
+            'text' => 'Tesis',
+            'route'  => 'tesis.create',
+            'icon' => 'fas fa-fw fa-graduation-cap',
+            'can' => 'titulado_proceso'
         ],
         [
             'text' => 'Docentes',

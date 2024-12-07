@@ -14,8 +14,32 @@ class DashboardAlumnoController extends Controller
     {
         $this->middleware('auth');
     }
-    
+
     public function index(Request $request)
+    {
+        $perPage = $request->input('perPage', 10);
+        $user = auth()->user();
+
+        // Buscar el alumno basado en nombre1, apellidop, y email_institucional del usuario autenticado
+        $alumno = Alumno::where('nombre1', $user->name)
+            ->where('apellidop', $user->apellido)
+            ->where('email_institucional', $user->email)
+            ->firstOrFail();
+
+        // Eager load de relaciones necesarias
+        $alumno->load([
+            'matriculas.asignatura.cohortes.aula',
+            'matriculas.asignatura.notas' => function ($query) use ($alumno) {
+                $query->where('alumno_dni', $alumno->dni);
+            }
+        ]);
+
+        $asignaturas = $alumno->matriculas->map->asignatura;
+       
+        // Retornar la vista con los datos
+        return view('dashboard.alumno', compact('asignaturas', 'alumno'));
+    }
+    public function alumnos_notas(Request $request)
     {
         $perPage = $request->input('perPage', 10);
         $user = auth()->user();
@@ -51,14 +75,13 @@ class DashboardAlumnoController extends Controller
                     'recuperacion' => $nota->recuperacion ?? 'N/A',
                     'total' => $nota->total ?? 'N/A',
                     'aula' => $cohorte && $cohorte->aula ? $cohorte->aula->nombre : 'N/A',
-                    'paralelo' => $cohorte && $cohorte->aula && $cohorte->aula->paralelo ? $cohorte->aula->paralelo->nombre : 'N/A',
+                    'paralelo' => $cohorte && $cohorte->aula && $cohorte->aula->paralelo ? $cohorte->aula->paralelo : 'N/A',
                     'docente' => $docente ? $docente->nombre1 . ' ' . $docente->nombre2 . ' ' . $docente->apellidop . ' ' . $docente->apellidom : 'N/A',
                     'docente_image' => $docente ? $docente->image : 'default_image_path.jpg',
                 ]
             ];
         });
-
-        return view('dashboard.alumno', compact('asignaturas', 'notas', 'perPage', 'alumno'));
+        // Retornar la vista con los datos
+        return view('notas.alumnos', compact('asignaturas', 'notas', 'perPage', 'alumno'));
     }
-
 }

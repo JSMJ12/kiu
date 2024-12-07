@@ -7,72 +7,45 @@ use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use App\Models\Alumno;
 use Illuminate\Support\Facades\Auth;
+use Yajra\DataTables\DataTables;
 
 class PagoController extends Controller
 {
     public function index(Request $request)
     {
-        $perPage = $request->input('perPage', 10);
-        $hoy = now()->startOfDay();
-        $mes = now()->startOfMonth();
-        $anio = now()->startOfYear();
+        if ($request->ajax()) {
+            $pagos = Pago::with('alumno.matriculas')->orderBy('verificado', 'asc');
+
+            return datatables()
+                ->eloquent($pagos)
+                ->addColumn('acciones', function ($pago) {
+                    if (!$pago->verificado) {
+                        return '
+                        <form id="form-verificar-' . $pago->id . '" action="' . route('pagos.verificar', $pago->id) . '" method="POST">
+                            ' . csrf_field() . method_field('PATCH') . '
+                            <button type="button" class="btn btn-success btn-sm" onclick="confirmarVerificacion(' . $pago->id . ')">
+                                <i class="fas fa-check"></i> Aprobado
+                            </button>
+                        </form>
+                    ';
+                    }
+                    return '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Verificado</span>';
+                })
+                ->rawColumns(['acciones'])
+                ->make(true);
+        }
     
-        // Todos los pagos
-        $todosPagos = Pago::orderBy('fecha_pago')->get();
-    
-        // Pagos por hora del día
-        $pagosPorHora = $todosPagos->where('fecha_pago', '>=', $hoy)->groupBy(function($pago) {
-            return \Carbon\Carbon::parse($pago->fecha_pago)->format('H:00');
-        })->map->sum('monto');
-    
-        // Pagos por día del mes
-        $pagosPorDia = $todosPagos->where('fecha_pago', '>=', $mes)->groupBy(function($pago) {
-            return \Carbon\Carbon::parse($pago->fecha_pago)->format('d');
-        })->map->sum('monto');
-    
-        // Pagos por mes del año
-        $pagosPorMes = $todosPagos->where('fecha_pago', '>=', $anio)->groupBy(function($pago) {
-            return \Carbon\Carbon::parse($pago->fecha_pago)->format('F');
-        })->map->sum('monto');
-    
-        // Cantidad de pagos realizados
-        $cantidadPorHora = $todosPagos->where('fecha_pago', '>=', $hoy)->groupBy(function($pago) {
-            return \Carbon\Carbon::parse($pago->fecha_pago)->format('H:00');
-        })->map->count();
-    
-        $cantidadPorDia = $todosPagos->where('fecha_pago', '>=', $mes)->groupBy(function($pago) {
-            return \Carbon\Carbon::parse($pago->fecha_pago)->format('d');
-        })->map->count();
-    
-        $cantidadPorMes = $todosPagos->where('fecha_pago', '>=', $anio)->groupBy(function($pago) {
-            return \Carbon\Carbon::parse($pago->fecha_pago)->format('F');
-        })->map->count();
-    
-        // Pagos por verificar
-        $pagosPorVerificar = Pago::where('verificado', false)->count();
-    
-        return view('pagos.index', [
-            'pagosPorHora' => $pagosPorHora,
-            'pagosPorDia' => $pagosPorDia,
-            'pagosPorMes' => $pagosPorMes,
-            'todosPagos' => $todosPagos,
-            'cantidadPorHora' => $cantidadPorHora,
-            'cantidadPorDia' => $cantidadPorDia,
-            'cantidadPorMes' => $cantidadPorMes,
-            'pagosPorVerificar' => $pagosPorVerificar,
-            'alumnosPendientes' => Pago::where('verificado', false)->with('alumno')->get()->unique('alumno_id'),
-        ], compact('perPage'));
+        return view('pagos.index');
     }
     
-
     public function pago()
     {
         $user = Auth::user();
 
         // Buscar al alumno
         $alumno = Alumno::where('nombre1', $user->name)
-                        ->where('email_institucional', $user->email)
-                        ->first();
+            ->where('email_institucional', $user->email)
+            ->first();
 
         if (!$alumno) {
             return redirect()->back()->with('error', 'Alumno no encontrado.');
@@ -109,37 +82,36 @@ class PagoController extends Controller
             'total_pagar' => $total_pagar,
         ];
 
-        $pagos = $alumno->pagos; 
+        $pagos = $alumno->pagos;
 
         return view('pagos.pago', compact('programa', 'alumno', 'pagos'));
     }
-
 
     public function store(Request $request)
     {
         $request->validate([
             'dni' => 'required|string|exists:alumnos,dni',
-            'modalidad_pago' => 'required|string|in:unico,trimestral',
+            'modalidad_pago' => 'required|string|in:unico,trimestral,otro',
             'fecha_pago' => 'required|date',
             'archivo_comprobante' => 'required|file|mimes:jpg,jpeg,png,pdf|max:4048',
         ]);
-    
+
         $alumno = Alumno::where('dni', $request->dni)->first();
-    
+
         if (!$alumno) {
             return redirect()->back()->with('error', 'Alumno no encontrado.');
         }
-    
+
         // Obtener el monto total previamente calculado
         $total_pagar = $alumno->monto_total;
-    
+
         // Ajustar el monto a pagar según la modalidad seleccionada
         $monto_pagar = $request->monto;
-    
+
         // Guardar el archivo comprobante
         $archivo_comprobante = $request->file('archivo_comprobante');
         $archivo_path = $archivo_comprobante->store('comprobantes', 'public');
-    
+
         // Crear el registro de pago usando el método create
         $pago = Pago::create([
             'dni' => $alumno->dni,
@@ -148,11 +120,10 @@ class PagoController extends Controller
             'archivo_comprobante' => $archivo_path,
             'modalidad_pago' => $request->modalidad_pago
         ]);
-    
-        // Redirigir con un mensaje de éxito
-        return redirect()->route('inicio')->with('success', 'Pago realizado exitosamente.');
+
+        return redirect()->route('pagos.pago')->with('success', 'Pago realizado exitosamente.');
     }
-    
+
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -165,51 +136,65 @@ class PagoController extends Controller
 
         return redirect()->route('pagos.index')->with('success', 'Pago actualizado con éxito.');
     }
-    public function showDescuentoForm()
+    
+    public function showDescuentoForm($dni)
     {
-        $user = Auth::user();
-
-        // Busca al alumno
-        $alumno = Alumno::where('nombre1', $user->name)
-                        ->where('email_institucional', $user->email)
-                        ->first();
+        // Busca al alumno por su DNI
+        $alumno = Alumno::where('dni', $dni)->first();
 
         if (!$alumno) {
-            return redirect()->back()->with('error', 'Alumno no encontrado.');
+            return response()->json(['error' => 'Alumno no encontrado.'], 404);
         }
 
         // Obtén la maestría del alumno
         $maestria = $alumno->maestria;
 
         if (!$maestria) {
-            return redirect()->back()->with('error', 'Maestría no encontrada para el alumno.');
+            return response()->json(['error' => 'Maestría no encontrada para el alumno.'], 404);
         }
+
+        // Datos del programa con descuentos y requisitos
         $programa = [
             'nombre' => $maestria->nombre,
             'arancel' => $maestria->arancel,
-            'descuento_academico' => $maestria->arancel * 0.30,
-            'descuento_socioeconomico' => $maestria->arancel * 0.20,
-            'descuento_graduados' => $maestria->arancel * 0.20,
-            'descuento_mejor_graduado' => $maestria->arancel * 1.00,
-            'total_con_academico' => $maestria->arancel * 0.70,
-            'total_con_socioeconomico' => $maestria->arancel * 0.80,
-            'total_con_graduados' => $maestria->arancel * 0.80,
-            'total_con_mejor_graduado' => 0
+            'descuentos' => [
+                'academico' => [
+                    'descuento' => $maestria->arancel * 0.30,
+                    'total' => $maestria->arancel * 0.70,
+                    'requisitos' => ['Promedio mayor a 9.6'],
+                    'color' => 'success',
+                ],
+                'socioeconomico' => [
+                    'descuento' => $maestria->arancel * 0.20,
+                    'total' => $maestria->arancel * 0.80,
+                    'requisitos' => ['Condición socioeconómica comprobada'],
+                    'color' => 'warning',
+                ],
+                'graduados' => [
+                    'descuento' => $maestria->arancel * 0.20,
+                    'total' => $maestria->arancel * 0.80,
+                    'requisitos' => ['Ser graduado en cualquier programa de pregrado ofrecido por UNESUM'],
+                    'color' => 'primary',
+                ],
+                'mejor_graduado' => [
+                    'descuento' => $maestria->arancel * 1.00,
+                    'total' => 0,
+                    'requisitos' => [
+                        'Certificado de mejor graduado',
+                        'Certificación de los dos últimos periodos académicos',
+                    ],
+                    'color' => 'danger',
+                ],
+            ]
         ];
 
-        return view('pagos.descuento', compact('programa', 'alumno'));
+        return response()->json(['programa' => $programa, 'alumno' => $alumno]);
     }
+
     public function processDescuento(Request $request)
     {
-        // Verifica si el usuario está autenticado
-        if (!$user = Auth::user()) {
-            return redirect()->back()->with('error', 'Usuario no autenticado.');
-        }
-
-        // Busca al alumno por el usuario autenticado
-        $alumno = Alumno::where('nombre1', $user->name)
-                        ->where('email_institucional', $user->email)
-                        ->first();
+        $alumno = Alumno::where('dni', $request->dni)
+            ->first();
 
         if (!$alumno) {
             return redirect()->back()->with('error', 'Alumno no encontrado.');
@@ -219,23 +204,19 @@ class PagoController extends Controller
             'descuento' => 'required',
         ]);
 
-        // Guardar el descuento seleccionado en el alumno
         $alumno->descuento = $request->input('descuento');
 
-        // Guardar el documento de autenticidad si existe
         if ($request->hasFile('documento')) {
             $documentoPath = $request->file('documento')->store('documentos_autenticidad', 'public');
             $alumno->documento_autenticidad = $documentoPath;
         }
 
-        // Obtener la maestría del alumno
         $maestria = $alumno->maestria;
 
         if (!$maestria) {
             return redirect()->back()->with('error', 'Maestría no encontrada para el alumno.');
         }
 
-        // Calcular el monto total a pagar basado en el descuento
         $arancel = $maestria->arancel;
         $descuento = 0;
 
@@ -250,29 +231,25 @@ class PagoController extends Controller
                 $descuento = $arancel * 0.20;
                 break;
             case 'mejor_graduado':
-                $descuento = $arancel; // 100% descuento
+                $descuento = $arancel;
                 break;
             default:
-                $descuento = 0; // Sin descuento
+                $descuento = 0;
                 break;
         }
-
-        // Calcular el monto total después de aplicar el descuento
         $monto_total = $arancel - $descuento;
 
-        // Guardar el monto total calculado en el campo 'monto_total' del alumno
         $alumno->monto_total = $monto_total;
 
         $alumno->save();
 
-        // Redirigir con un mensaje de éxito
-        return redirect()->route('inicio');
+        return redirect()->route('descuentos.alumnos')->with('success', 'Descuento aplicado y monto total actualizado.');
     }
     public function verificar_pago($id)
     {
         // Encontrar el pago por su ID
         $pago = Pago::findOrFail($id);
-        
+
         // Encontrar el alumno por el DNI del pago
         $alumno = Alumno::where('dni', $pago->dni)->first();
         if (!$alumno) {
@@ -294,6 +271,4 @@ class PagoController extends Controller
         // Redirigir con un mensaje de éxito
         return redirect()->route('pagos.index')->with('success', 'Pago verificado con éxito y monto total actualizado.');
     }
-
-
 }

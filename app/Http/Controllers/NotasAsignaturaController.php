@@ -51,19 +51,13 @@ class NotasAsignaturaController extends Controller
         $pdfPath = 'pdfs/' . $pdfFileName;
         $url = url($pdfPath);
         
-        // Replace "https" scheme with "http"
-        $httpUrl = str_replace('https://', 'http://', $url);
-
-        $logoPath = public_path('images/posg.jpg');
-
         // Generate QR code with logo
         $qrCode = QrCode::format('png')
             ->size(100)
             ->eye('circle')
             ->gradient(24, 115, 108, 33, 68, 59, 'diagonal')
             ->errorCorrection('H')
-            ->merge($logoPath, 0.3, true)
-            ->generate($httpUrl);
+            ->generate($url);
 
         // Create PDF and pass data to the view
         $pdf = Pdf::loadView('record.notas_asignatura', compact(

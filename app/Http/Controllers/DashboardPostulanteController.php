@@ -13,9 +13,10 @@ use Illuminate\Support\Facades\Notification;
 use App\Notifications\Postulacion2;
 use App\Events\SubirArchivoEvent;
 use App\Notifications\SubirArchivoNotification;
+
 class DashboardPostulanteController extends Controller
 {
-    
+
     public function index()
     {
         $user = auth()->user();
@@ -27,10 +28,10 @@ class DashboardPostulanteController extends Controller
             }])
             ->firstOrFail();
         if (
-            is_null($postulante->pdf_cedula) || 
-            is_null($postulante->pdf_papelvotacion) || 
-            is_null($postulante->pdf_titulouniversidad) || 
-            is_null($postulante->pdf_hojavida) || 
+            is_null($postulante->pdf_cedula) ||
+            is_null($postulante->pdf_papelvotacion) ||
+            is_null($postulante->pdf_titulouniversidad) ||
+            is_null($postulante->pdf_hojavida) ||
             ($postulante->discapacidad == "Si" && is_null($postulante->pdf_conadis))
         ) {
             $usuario = User::where('name', $postulante->nombre1)
@@ -52,69 +53,39 @@ class DashboardPostulanteController extends Controller
             ->where('correo_electronico', $user->email)
             ->firstOrFail();
 
+        // Crear el directorio si no existe
         Storage::makeDirectory('public/postulantes/pdf');
 
-        // Inicializar variables para almacenar las rutas de los archivos
-        $pdfCedulaPath = $postulante->pdf_cedula;
-        $pdfPapelVotacionPath = $postulante->pdf_papelvotacion;
-        $pdfTituloUniversidadPath = $postulante->pdf_titulouniversidad;
-        $pdfHojavidaPath = $postulante->pdf_hojavida;
-        $pdfConadisPath = $postulante->pdf_conadis;
-        $pdfPagoMatriculaPath = $postulante->pago_matricula;
-
-        if ($request->hasFile('pdf_cedula')) {
-            $pdfCedulaPath = $request->file('pdf_cedula')->store('postulantes/pdf', 'public');
-        }
-        if ($request->hasFile('pdf_papelvotacion')) {
-            $pdfPapelVotacionPath = $request->file('pdf_papelvotacion')->store('postulantes/pdf', 'public');
-        }
-        if ($request->hasFile('pdf_titulouniversidad')) {
-            $pdfTituloUniversidadPath = $request->file('pdf_titulouniversidad')->store('postulantes/pdf', 'public');
-        }
-        if ($request->hasFile('pdf_hojavida')) {
-            $pdfHojavidaPath = $request->file('pdf_hojavida')->store('postulantes/pdf', 'public');
-        }
-        if ($request->hasFile('pdf_conadis')) {
-            $pdfConadisPath = $request->file('pdf_conadis')->store('postulantes/pdf', 'public');
-        }
-        if ($request->hasFile('pago_matricula')) {
-            $pdfPagoMatriculaPath = $request->file('pago_matricula')->store('postulantes/pdf', 'public');
-        }
-        if ($request->hasFile('carta_aceptacion')) {
-            $pdfCartaAceptacionPath = $request->file('carta_aceptacion')->store('postulantes/pdf', 'public');
-        }
+        $files = [
+            'pdf_cedula' => 'pdf_cedula',
+            'pdf_papelvotacion' => 'pdf_papelvotacion',
+            'pdf_titulouniversidad' => 'pdf_titulouniversidad',
+            'pdf_hojavida' => 'pdf_hojavida',
+            'pdf_conadis' => 'pdf_conadis',
+            'pago_matricula' => 'pago_matricula',
+            'carta_aceptacion' => 'carta_aceptacion',
+        ];
 
         $updateData = [];
-        if (isset($pdfCedulaPath)) {
-            $updateData['pdf_cedula'] = $pdfCedulaPath;
-        }
-        if (isset($pdfCartaAceptacionPath)) {
-            $updateData['carta_aceptacion'] = $pdfCartaAceptacionPath;
-        }
-        if (isset($pdfPapelVotacionPath)) {
-            $updateData['pdf_papelvotacion'] = $pdfPapelVotacionPath;
-        }
-        if (isset($pdfTituloUniversidadPath)) {
-            $updateData['pdf_titulouniversidad'] = $pdfTituloUniversidadPath;
-        }
-        if (isset($pdfHojavidaPath)) {
-            $updateData['pdf_hojavida'] = $pdfHojavidaPath;
-        }
-        if (isset($pdfConadisPath)) {
-            $updateData['pdf_conadis'] = $pdfConadisPath;
-        }
-        if (isset($pdfPagoMatriculaPath)) {
-            $updateData['pago_matricula'] = $pdfPagoMatriculaPath;
+
+        // Procesar cada archivo y actualizar solo si el archivo fue subido
+        foreach ($files as $inputName => $column) {
+            if ($request->hasFile($inputName)) {
+                $updateData[$column] = $request->file($inputName)->store('postulantes/pdf', 'public');
+            }
         }
 
-        $postulante->update($updateData);
+        if (!empty($updateData)) {
+            $postulante->update($updateData);
+        }
 
-
+        // Enviar notificación al postulante
         Notification::route('mail', $postulante->correo_electronico)
             ->notify(new Postulacion2($postulante));
 
         return redirect()->route('inicio')->with('success', 'Postulación realizada exitosamente.');
     }
+
 
     public function carta_aceptacionPdf(Request $request, $dni)
     {
@@ -123,10 +94,7 @@ class DashboardPostulanteController extends Controller
         $filename = 'Carta_de_Aceptacion_' . $postulante->nombre1 . '_' . $postulante->apellidop . '_' . $postulante->dni . '.pdf';
 
         return PDF::loadView('postulantes.carta_aceptacion', compact('postulante'))
-                    ->setPaper('A4', 'portrait')
-                    ->stream($filename);
+            ->setPaper('A4', 'portrait')
+            ->stream($filename);
     }
-
-
-
 }

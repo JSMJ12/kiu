@@ -15,10 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('alumno_dni'); // Cambia a string para referenciar el DNI
             $table->foreign('alumno_dni')->references('dni')->on('alumnos')->onDelete('cascade');
-            $table->string('tutor_id')->nullable(); // Cambia a string para referenciar el DNI
-            $table->foreign('tutor_id')->references('dni')->on('docentes')->onDelete('set null');
+            $table->string('tutor_dni')->nullable(); // Cambia a string para referenciar el DNI
+            $table->foreign('tutor_dni')->references('dni')->on('docentes')->onDelete('set null');
             $table->string('tema');
             $table->text('descripcion')->nullable();
+            $table->string('solicitud_pdf');
             $table->enum('estado', ['pendiente', 'aprobado', 'rechazado'])->default('pendiente');
             $table->timestamps();
         });

@@ -73,6 +73,10 @@ class Alumno extends Model
     {
         return $this->hasMany(Pago::class, 'dni', 'dni');
     }
+    public function tesis()
+    {
+        return $this->hasMany(Tesis::class, 'alumno_dni', 'dni');
+    }
     protected static function boot()
     {
         parent::boot();

@@ -14,7 +14,7 @@ class CreatePagosTable extends Migration
             $table->decimal('monto', 10, 2);
             $table->date('fecha_pago');
             $table->string('archivo_comprobante')->nullable();
-            $table->enum('modalidad_pago', ['unica', 'trimestral']);
+            $table->enum('modalidad_pago', ['unico', 'trimestral', 'otro']);
             $table->boolean('verificado')->default(false);
             $table->timestamps();
 

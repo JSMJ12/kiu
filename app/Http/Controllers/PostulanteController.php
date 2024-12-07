@@ -30,7 +30,7 @@ class PostulanteController extends Controller
                 ->where('email', $user->email)
                 ->firstOrFail();
             $maestriasIds = $secretario->seccion->maestrias->pluck('id');
-            $postulantes = Postulante::whereIn('maestria_postular', $maestriasIds)->get();
+            $postulantes = Postulante::whereIn('maestria_id', $maestriasIds)->get();
         }
         return view('postulantes.index', compact('postulantes', 'perPage'));
     }

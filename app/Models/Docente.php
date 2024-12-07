@@ -54,8 +54,17 @@ class Docente extends Model
     }
     public function maestria()
     {
-        return $this->belongsToMany(Maestria::class);
+        return $this->hasMany(Maestria::class, 'coordinador');
     }
+    public function tesis()
+    {
+        return $this->hasMany(Tesis::class, 'tutor_id', 'dni');
+    }
+    public function tutorias()
+    {
+        return $this->hasMany(Tutoria::class, 'tutor_dni', 'dni');
+    }
+
     public function getFullNameAttribute()
     {
         return "{$this->nombre1} {$this->nombre2} {$this->apellidop} {$this->apellidom}";

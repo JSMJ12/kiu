@@ -1,218 +1,174 @@
 @extends('adminlte::page')
 
-@section('title', 'Pagos')
+@section('title', 'Gestión de Alumnos')
 
 @section('content_header')
-    <h1>Descuentos</h1>
+    <h1><i class="fas fa-users"></i> Asignar Descuentos</h1>
 @stop
 
 @section('content')
-<div class="container">
-    @if ($alumno->descuento)
-        <div class="alert alert-info mt-4">
-            <p>Ya has seleccionado el descuento "{{ ucfirst($alumno->descuento) }}". No puedes seleccionar otro descuento.</p>
-        </div>
-    @else
-        <h1 class="program-title">Descuentos Disponibles para {{ $programa['nombre'] }}</h1>
-
-        <form id="descuentos-form" action="{{ route('pago.descuento.process') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            <div class="descuentos-panel">
-                <div class="descuento-item bg-success text-dark">
-                    <h2>Descuento Académico</h2>
-                    <p>Arancel Original: ${{ $programa['arancel'] }}</p>
-                    <p>Descuento: ${{ $programa['descuento_academico'] }}</p>
-                    <p>Total con Descuento: ${{ $programa['total_con_academico'] }}</p>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="descuento" id="descuentoAcademico" value="academico">
-                        <label class="form-check-label text-dark" for="descuentoAcademico">
-                            Seleccionar
-                        </label>
-                    </div>
-                    <div class="requisitos">
-                        <strong>Requisitos:</strong>
-                        <ul>
-                            <li>Tener un promedio mayor a 9.6</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="descuento-item bg-warning text-dark">
-                    <h2>Descuento Socioeconómico</h2>
-                    <p>Arancel Original: ${{ $programa['arancel'] }}</p>
-                    <p>Descuento: ${{ $programa['descuento_socioeconomico'] }}</p>
-                    <p>Total con Descuento: ${{ $programa['total_con_socioeconomico'] }}</p>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="descuento" id="descuentoSocioeconomico" value="socioeconomico">
-                        <label class="form-check-label text-dark" for="descuentoSocioeconomico">
-                            Seleccionar
-                        </label>
-                    </div>
-                    <div class="requisitos">
-                        <strong>Requisitos:</strong>
-                        <ul>
-                            <li>Ser de escasos recursos socioeconómicos</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="descuento-item bg-danger text-dark">
-                    <h2>Descuento para Graduados</h2>
-                    <p>Arancel Original: ${{ $programa['arancel'] }}</p>
-                    <p>Descuento: ${{ $programa['descuento_graduados'] }}</p>
-                    <p>Total con Descuento: ${{ $programa['total_con_graduados'] }}</p>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="descuento" id="descuentoGraduados" value="graduados">
-                        <label class="form-check-label text-dark" for="descuentoGraduados">
-                            Seleccionar
-                        </label>
-                    </div>
-                    <div class="requisitos">
-                        <strong>Requisitos:</strong>
-                        <ul>
-                            <li>Ser graduado en cualquier programa de pregrado ofrecido por UNESUM</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="descuento-item bg-primary text-dark">
-                    <h2>Descuento Mejor Graduado</h2>
-                    <p>Arancel Original: ${{ $programa['arancel'] }}</p>
-                    <p>Descuento: ${{ $programa['descuento_mejor_graduado'] }}</p>
-                    <p>Total con Descuento: ${{ $programa['total_con_mejor_graduado'] }}</p>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="descuento" id="descuentoMejorGraduado" value="mejor_graduado">
-                        <label class="form-check-label text-dark" for="descuentoMejorGraduado">
-                            Seleccionar
-                        </label>
-                    </div>
-                    <div class="requisitos">
-                        <strong>Requisitos:</strong>
-                        <ul>
-                            <li>Tener el documento que pruebe que es el mejor graduado de su promoción</li>
-                            <li>Certificación de los dos últimos periodos académicos</li>
-                        </ul>
-                    </div>
+    <div class="container-fluid">
+        <div class="card shadow-lg">
+            <div class="card-header text-white" style="background-color: #3007b8;">
+                <h3 class="card-title">Listado de Alumnos</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered table-striped" id="alumnos">
+                        <thead style="background-color: #28a745; color: white;">
+                            <tr>
+                                <th>Cédula / Pasaporte</th>
+                                <th>Foto</th>
+                                <th>Nombre Completo</th>
+                                <th>Maestría</th>
+                                <th>Email Institucional</th>
+                                <th>Sexo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- El contenido se cargará dinámicamente mediante DataTables -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
-
-            <div id="documento-autenticidad" class="mt-4" style="display:none;">
-                <div class="box box-primary">
-                    <div class="box-header with-border">
-                        <h3 class="box-title">Documento de Autenticidad</h3>
-                    </div>
-                    <div class="box-body">
-                        <div class="form-group">
-                            <label for="documento">Subir Documento de Autenticidad:</label>
-                            <input type="file" class="form-control" id="documento" name="documento">
-                        </div>
-                        <div class="alert alert-info">
-                            Para poder ser asignado esta beca tiene que cumplir con lo siguiente: los dos últimos periodos académicos, tener la certificación que le otorgue la carrera.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary mt-4">Confirmar Selección</button>
-        </form>
-
-        <div class="alert alert-info mt-4">
-            <p><strong>Nota:</strong> Solo puedes postular a una sola beca. Debes cumplir con los requisitos de la beca a la que postules.</p>
         </div>
-    @endif
-</div>
-@stop
-
-@section('css')
-<style>
-    .program-title {
-        background-color: #04c60a;
-        color: white;
-        padding: 20px;
-        text-align: center;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-
-    .descuentos-panel {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        justify-content: space-around;
-    }
-
-    .descuento-item {
-        position: relative;
-        padding: 20px;
-        min-height: 250px;
-        flex: 1 1 calc(45% - 20px);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        border-radius: 10px;
-        max-width: 45%;
-        cursor: pointer;
-        overflow: visible;
-    }
-
-    .descuento-item h2, .descuento-item p {
-        color: white;
-    }
-
-    .requisitos {
-        display: none;
-        background-color: white;
-        color: #333;
-        border: 1px solid #ddd;
-        padding: 10px;
-        border-radius: 5px;
-        text-align: left;
-        width: 150px;
-        position: absolute;
-        right: -160px;
-        top: 0;
-        z-index: 5;
-        box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .descuento-item:hover .requisitos {
-        display: block;
-    }
-
-    .form-check {
-        margin-top: 10px;
-    }
-
-    .btn {
-        display: block;
-        margin: 0 auto;
-    }
-
-    @media (max-width: 768px) {
-        .descuento-item {
-            flex: 1 1 100%;
-            max-width: 100%;
-        }
-
-        .requisitos {
-            right: auto;
-            left: 0;
-            position: static;
-            max-width: 100%;
-        }
-    }
-</style>
+    </div>
+    <div id="dynamicModals"></div>
 @stop
 
 @section('js')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const descuentosForm = document.getElementById('descuentos-form');
-        const documentoAutenticidadDiv = document.getElementById('documento-autenticidad');
+    <script>
+        $(document).ready(function() {
+            let alumnosTable = $('#alumnos').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ route('descuentos.alumnos') }}",
+                columns: [{
+                        data: 'dni',
+                        name: 'dni'
+                    },
+                    {
+                        data: 'foto',
+                        name: 'foto',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'nombre_completo',
+                        name: 'nombre_completo'
+                    },
+                    {
+                        data: 'maestria_nombre',
+                        name: 'maestria.nombre'
+                    },
+                    {
+                        data: 'email_institucional',
+                        name: 'email_institucional'
+                    },
+                    {
+                        data: 'sexo',
+                        name: 'sexo'
+                    },
+                    {
+                        data: 'acciones',
+                        name: 'acciones',
+                        orderable: false,
+                        searchable: false
+                    },
+                ],
+                language: {
+                    url: "https://cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+                },
+            });
 
-        descuentosForm.addEventListener('change', function(e) {
-            const selectedDescuento = descuentosForm.querySelector('input[name="descuento"]:checked').value;
-            documentoAutenticidadDiv.style.display = selectedDescuento === 'mejor_graduado' ? 'block' : 'none';
+            $('#alumnos').on('click', '.select-descuento', function() {
+                let dniAlumno = $(this).data('dni'); // Usando el DNI del alumno
+                $.ajax({
+                    url: `/descuento/${dniAlumno}`, // Ruta con el DNI
+                    method: "GET",
+                    success: function(response) {
+                        let descuentos = response.programa.descuentos;
+                        let modalId = `descuentoModal${dniAlumno}`;
+                        let modalHtml = `
+            <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">Seleccionar Descuento</h5>
+                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form action="{{ route('pago.descuento.process') }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <input type="hidden" name="dni" value="${dniAlumno}">
+                            <div class="modal-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Tipo de Descuento</th>
+                                                <th>Arancel Original</th>
+                                                <th>Monto de Descuento</th>
+                                                <th>Total con Descuento</th>
+                                                <th>Requisitos</th>
+                                                <th>Seleccionar</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${Object.entries(descuentos).map(([tipo, d]) => `
+                                                <tr class="bg-${d.color}">
+                                                    <td><strong>${tipo.charAt(0).toUpperCase() + tipo.slice(1)}</strong></td>
+                                                    <td>$${response.programa.arancel}</td>
+                                                    <td>$${d.descuento}</td>
+                                                    <td>$${d.total}</td>
+                                                    <td>
+                                                        <ul>
+                                                            ${d.requisitos.map(req => `<li>${req}</li>`).join('')}
+                                                        </ul>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <input class="form-check-input" type="radio" name="descuento" id="descuento${tipo}" value="${tipo}">
+                                                    </td>
+                                                </tr>`).join('') || '<tr><td colspan="6" class="text-center alert alert-info">No hay descuentos disponibles.</td></tr>'}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="documentoAutenticidad" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="documento">Subir Documento de Autenticidad:</label>
+                                        <input type="file" class="form-control" id="documento" name="documento">
+                                    </div>
+                                    <div class="alert alert-info mt-2">
+                                        Para aplicar este descuento, debe subir el documento solicitado.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Confirmar Selección</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>`;
+
+                        if (!$(`#${modalId}`).length) {
+                            $('#dynamicModals').append(modalHtml);
+                        }
+                        $(`#${modalId}`).modal('show');
+
+                        // Control para mostrar el campo de autenticidad según el descuento seleccionado
+                        $(`#${modalId} input[name="descuento"]`).on('change', function() {
+                            let selectedDescuento = $(this).val();
+                            $('#documentoAutenticidad').toggle(selectedDescuento ===
+                                'mejor_graduado');
+                        });
+                    }
+                });
+            });
+
         });
-    });
-</script>
+    </script>
 @stop

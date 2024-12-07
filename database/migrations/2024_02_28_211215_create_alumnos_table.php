@@ -33,7 +33,7 @@ return new class extends Migration
             $table->string('contra')->nullable();
             $table->string('image')->nullable();
             $table->char('sexo', 1)->nullable();
-            $table->unsignedInteger('registro')->unique();
+            $table->integer('registro');
             $table->string('celular')->nullable();
             $table->string('titulo_profesional')->nullable();
             $table->string('universidad_titulo')->nullable();

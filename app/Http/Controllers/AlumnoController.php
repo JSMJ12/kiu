@@ -40,7 +40,7 @@ class AlumnoController extends Controller
                     return $alumno->maestria ? $alumno->maestria->nombre : 'Sin Maestría';
                 })
                 ->addColumn('foto', function ($alumno) {
-                    return '<img src="' . asset('storage/' . $alumno->image) . '" alt="Foto de ' . $alumno->nombre1 . '" style="max-width: 60px; border-radius: 50%;">';
+                    return '<img src="' . asset('storage/' . $alumno->image) . '" alt="Foto de ' . $alumno->nombre1 . '" class="img-thumbnail rounded-circle" style="width: 60px; height: 60px; object-fit: cover;">';
                 })
                 ->addColumn('nombre_completo', function ($alumno) {
                     return "{$alumno->nombre1}<br>{$alumno->nombre2}<br>{$alumno->apellidop}<br>{$alumno->apellidom}";

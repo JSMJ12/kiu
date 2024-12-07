@@ -28,14 +28,16 @@ use App\Http\Controllers\SeccionController;
 use App\Http\Controllers\RecordController;
 use App\Http\Controllers\NotaController;
 use App\Http\Controllers\NotasAsignaturaController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\CorreoController;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PostulanteController;
-use App\Http\Controllers\CertificadoController;
 use App\Http\Controllers\NotificacionesController;
 use App\Http\Controllers\PerfilAlumnoController;
+use App\Http\Controllers\TesisController;
+use App\Http\Controllers\CoordinadorController;
+use App\Http\Controllers\DescuentoController;
+use App\Http\Controllers\TutoriaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,21 +50,26 @@ use App\Http\Controllers\PerfilAlumnoController;
 |
 */
 
-Auth::routes();
 
-route::get('/', function () {    return redirect()->route('login');})->middleware('guest');
+Route::get('/', function () {
+    return Auth::check() ? redirect()->route('inicio') : redirect()->route('login');
+});
 
 //Redireccionador
 Route::get('/inicio', [InicioController::class, 'redireccionarDashboard'])->name('inicio');
+
+Auth::routes();
 
 //DASHBOARD
 Route::get('/dashboard/admin', [DashboardAdminController::class, 'index'])->middleware('can:dashboard_admin')->name('dashboard_admin');
 Route::get('/dashboard/docente', [DashboardDocenteController::class, 'index'])->middleware('can:dashboard_docente')->name('dashboard_docente');
 Route::get('/dashboard/secretario', [DashboardSecretarioController::class, 'index'])->middleware('can:dashboard_secretario')->name('dashboard_secretario');
-Route::get('/dashboard/secretario/epsu', [DashboardSecretarioEpsuController::class, 'index'])->middleware('can:epsu_dashboard')->name('dashboard_secretario_epsu');
-Route::get('/dashboard/alumno', [DashboardAlumnoController::class, 'index'])->middleware('can:dashboard_alumno')->name('dashboard_alumno');
-Route::get('/dashboard/postulante', [DashboardPostulanteController::class, 'index'])->middleware('can:dashboard_postulante')->name('dashboard_postulante');
+Route::get('/dashboard/secretario/epsu', [DashboardSecretarioEpsuController::class, 'index'])->middleware('can:dashboard_secretario_epsu')->name('dashboard_secretario_epsu');
 
+Route::get('/dashboard/alumno', [DashboardAlumnoController::class, 'index'])->middleware('can:dashboard_alumno')->name('dashboard_alumno');
+Route::get('/dashboard/alumno/notas', [DashboardAlumnoController::class, 'alumnos_notas'])->middleware('can:dashboard_alumno')->name('dashboard_alumno.notas');
+Route::get('/dashboard/postulante', [DashboardPostulanteController::class, 'index'])->middleware('can:dashboard_postulante')->name('dashboard_postulante');
+Route::get('/dashboard/coordinador', [CoordinadorController::class, 'index'])->middleware('can:dashboard_coordinador')->name('dashboard_coordinador');
 //USUARIOS
 Route::resource('usuarios', UsuarioController::class)->middleware(['can:dashboard_admin']);
 Route::put('/usuarios/{usuario}/disable', [UsuarioController::class, 'disable'])->name('usuarios.disable')->middleware('can:dashboard_admin');
@@ -144,6 +151,7 @@ Route::middleware(['can:dashboard_secretario_epsu'])->group(function () {
 
     // Eliminar un pago (equivalente a destroy)
     Route::delete('/pagos/{pago}', [PagoController::class, 'destroy'])->name('pagos.destroy');
+    Route::get('/descuentos/alumnos/aplicar', [DescuentoController::class, 'alumnos'])->name('descuentos.alumnos');
 });
 
 //Matriculas
@@ -177,8 +185,9 @@ Route::get('/exportar-excel/{docenteId}/{asignaturaId}/{cohorteId}/{aulaId?}/{pa
 Route::resource('notificaciones', NotificacionesController::class)->only(['index', 'destroy']);
 Route::get('/cantidad-notificaciones', [NotificacionesController::class, 'contador']);
 
+
 // Mostrar el formulario para descuento
-Route::get('/descuento', [PagoController::class, 'showDescuentoForm'])
+Route::get('/descuento/{dni}', [PagoController::class, 'showDescuentoForm'])
     ->name('pago.descuento.form')
     ->middleware('auth');
 
@@ -202,3 +211,21 @@ Route::middleware(['can:dashboard_alumno'])->group(function () {
 Route::post('/perfiles/actualizar', [PerfilController::class, 'actualizar_p'])->name('perfil.actualizar')->middleware('auth');
 Route::get('/actualizar_perfil', [PerfilAlumnoController::class, 'edit'])->name('edit_datosAlumnos');
 Route::post('/actualizar_perfil/procesar', [PerfilAlumnoController::class, 'update'])->name('update_datosAlumnos');
+
+//Tesis
+Route::resource('tesis', TesisController::class);
+Route::get('/tesis/descargar/pdf', [TesisController::class, 'downloadPDF'])->name('tesis.downloadPDF');
+Route::post('/tesis/aceptar/{id}', [TesisController::class, 'aceptarTema'])->name('tesis.aceptar');
+Route::post('/tesis/rechazar/{id}', [TesisController::class, 'rechazarTema'])->name('tesis.rechazar');
+Route::post('/tesis/asignar-tutor/{id}', [TesisController::class, 'asignarTutor'])->name('tesis.asignarTutor');
+
+//Tutorias
+
+Route::middleware(['auth', 'can:revisar_tesis'])->group(function () {
+    Route::get('/tesis/tutorias/todas', [TutoriaController::class, 'index'])->name('tutorias.index');
+    Route::get('/tesis/{tesisId}/tutorias/create', [TutoriaController::class, 'create'])->name('tutorias.create');
+    Route::post('/tutorias', [TutoriaController::class, 'store'])->name('tutorias.store');
+    Route::put('/tutorias/{id}/realizar', [TutoriaController::class, 'updateEstado'])->name('tutorias.realizar');
+    Route::delete('tutorias/{id}', [TutoriaController::class, 'destroy'])->name('tutorias.delete');
+});
+Route::get('/tesis/{tesisId}/tutorias', [TutoriaController::class, 'listar'])->name('tutorias.listar');
