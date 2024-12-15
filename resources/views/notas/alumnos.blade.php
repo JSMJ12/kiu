@@ -18,8 +18,6 @@
                         <thead style="background-color: #28a745; color: white;">
                             <tr>
                                 <th>Docente</th>
-                                <th>Aula</th>
-                                <th>Paralelo</th>
                                 <th>Asignatura</th>
                                 <th>Actividades de Aprendizaje</th>
                                 <th>Prácticas de Aplicación</th>
@@ -30,22 +28,20 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($notas as $asignatura => $nota)
+                            @foreach ($notasData as $asignatura => $nota)
                                 <tr>
                                     <td>
                                         <div style="display: flex; align-items: center;">
                                             <img src="{{ asset('storage/' . $nota['docente_image']) }}"
-                                                alt="Imagen del Docente"
-                                                style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">
-                                            <span>{{ $nota['docente'] }}</span>
+                                                 alt="Imagen del Docente"
+                                                 style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">
+                                            <span>{{ $nota['docente_nombre'] }}</span>
                                         </div>
-                                    </td>                                    
-                                    <td>{{ $nota['aula'] }}</td>
-                                    <td>{{ $nota['paralelo'] }}</td>
+                                    </td>
                                     <td>{{ $asignatura }}</td>
-                                    <td>{{ $nota['actividades_aprendizaje'] }}</td>
-                                    <td>{{ $nota['practicas_aplicacion'] }}</td>
-                                    <td>{{ $nota['aprendizaje_autonomo'] }}</td>
+                                    <td>{{ $nota['nota_actividades'] }}</td>
+                                    <td>{{ $nota['nota_practicas'] }}</td>
+                                    <td>{{ $nota['nota_autonomo'] }}</td>
                                     <td>{{ $nota['examen_final'] }}</td>
                                     <td>{{ $nota['recuperacion'] }}</td>
                                     <td>{{ $nota['total'] }}</td>
@@ -57,11 +53,6 @@
             </div>
         </div>
     </div>
-    </div>
-@stop
-
-@section('css')
-    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
 @stop
 
 @section('js')

@@ -28,7 +28,7 @@ class RecordController extends Controller
         });
 
         // Obtener la cohorte del alumno
-        $cohorte = $alumno->maestria->cohorte->first();
+        $cohorte = $alumno->maestria->cohortes->first();
 
         preg_match('/Cohorte (\w+)/', $cohorte->nombre, $matches);
         $numeroRomano = $matches[1] ?? '';

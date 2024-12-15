@@ -6,145 +6,113 @@
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-10">
             <div class="card">
-                <div class="card-header">{{ __('Editar Cohorte') }}</div>
-
+                <div class="card-header text-center bg-primary text-white">Información de Cohorte</div>
                 <div class="card-body">
                     <form method="POST" action="{{ route('cohortes.update', $cohorte->id) }}">
                         @csrf
                         @method('PUT')
-                        <div class="form-group">
-                            <label for="nombre">Nombre:</label>
-                            <input type="text" name="nombre" id="nombre" class="form-control" value="{{ old('nombre', $cohorte->nombre) }}" required>
-                        </div>
-                        <div class="form-group row">
-                            <label for="maestria_id" class="col-md-4 col-form-label text-md-right">{{ __('Maestría') }}</label>
-                
-                            <div class="col-md-6">
-                                <select id="maestria_id" class="form-control @error('maestria_id') is-invalid @enderror" name="maestria_id" required>
+                        <div class="row">
+                            <!-- Nombre -->
+                            <div class="form-group col-md-6">
+                                <label for="nombre"><i class="fas fa-file-signature"></i> Nombre:</label>
+                                <input type="text" name="nombre" id="nombre" class="form-control" value="{{ old('nombre', $cohorte->nombre) }}" required>
+                            </div>
+
+                            <!-- Maestría -->
+                            <div class="form-group col-md-6">
+                                <label for="maestria_id"><i class="fas fa-graduation-cap"></i> Maestría:</label>
+                                <select id="maestria_id" class="form-control" name="maestria_id" required>
                                     <option value="" selected disabled>-- Seleccione una opción --</option>
                                     @foreach($maestrias as $maestria)
                                         <option value="{{ $maestria->id }}" {{ old('maestria_id', $cohorte->maestria_id) == $maestria->id ? 'selected' : '' }}>{{ $maestria->nombre }}</option>
                                     @endforeach
                                 </select>
-                
-                                @error('maestria_id')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
                             </div>
-                        </div>
-                
-                        <div class="form-group row">
-                            <label for="periodo_academico_id" class="col-md-4 col-form-label text-md-right">{{ __('Periodo Académico') }}</label>
-                
-                            <div class="col-md-6">
-                                <select id="periodo_academico_id" class="form-control @error('periodo_academico_id') is-invalid @enderror" name="periodo_academico_id" required>
+
+                            <!-- Periodo Académico -->
+                            <div class="form-group col-md-6">
+                                <label for="periodo_academico_id"><i class="fas fa-calendar-alt"></i> Periodo Académico:</label>
+                                <select id="periodo_academico_id" class="form-control" name="periodo_academico_id" required>
                                     <option value="" selected disabled>-- Seleccione una opción --</option>
                                     @foreach($periodos_academicos as $periodo_academico)
                                         <option value="{{ $periodo_academico->id }}" {{ old('periodo_academico_id', $cohorte->periodo_academico_id) == $periodo_academico->id ? 'selected' : '' }}>{{ $periodo_academico->nombre }}</option>
                                     @endforeach
                                 </select>
-                
-                                @error('periodo_academico_id')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
                             </div>
-                        </div>
-                        
-                        <div class="form-group row">
-                            <label for="aula_id" class="col-md-4 col-form-label text-md-right">{{ __('Aula') }}</label>
-                        
-                            <div class="col-md-6">
-                                <select id="aula_id" class="form-control @error('aula_id') is-invalid @enderror" name="aula_id" required>
-                                    <option value="" selected disabled>-- Seleccione una opción --</option>
-                                    @foreach($aulas as $aula)
-                                        <option value="{{ $aula->id }}" {{ old('aula_id', $cohorte->aula_id) == $aula->id ? 'selected' : '' }}>{{ $aula->nombre }}</option>
-                                    @endforeach
-                                </select>
-                        
-                                @error('aula_id')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
+
+                            <!-- Aforo -->
+                            <div class="form-group col-md-6">
+                                <label for="aforo"><i class="fas fa-users"></i> Aforo:</label>
+                                <input id="aforo" type="number" class="form-control" name="aforo" value="{{ old('aforo', $cohorte->aforo) }}" required>
                             </div>
-                        </div>
-                        
-                        <div class="form-group row">
-                            <label for="aforo" class="col-md-4 col-form-label text-md-right">{{ __('Aforo') }}</label>
-                        
-                            <div class="col-md-6">
-                                <input id="aforo" type="number" class="form-control @error('aforo') is-invalid @enderror" name="aforo" value="{{ old('aforo', $cohorte->aforo) }}" required>
-                        
-                                @error('aforo')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-                        
-                        <div class="form-group row">
-                            <label for="modalidad" class="col-md-4 col-form-label text-md-right">{{ __('Modalidad') }}</label>
-                        
-                            <div class="col-md-6">
-                                <select id="modalidad" class="form-control @error('modalidad') is-invalid @enderror" name="modalidad" required>
-                                    <option value="" selected disabled>-- Seleccione una opción --</option>
+
+                            <!-- Modalidad -->
+                            <div class="form-group col-md-6">
+                                <label for="modalidad"><i class="fas fa-chalkboard"></i> Modalidad:</label>
+                                <select id="modalidad" class="form-control" name="modalidad" required>
+                                    <option value="">--Seleccione--</option>
                                     <option value="presencial" {{ old('modalidad', $cohorte->modalidad) == 'presencial' ? 'selected' : '' }}>Presencial</option>
                                     <option value="hibrida" {{ old('modalidad', $cohorte->modalidad) == 'hibrida' ? 'selected' : '' }}>Híbrida</option>
                                     <option value="virtual" {{ old('modalidad', $cohorte->modalidad) == 'virtual' ? 'selected' : '' }}>Virtual</option>
                                 </select>
-                        
-                                @error('modalidad')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
+                            </div>
+
+                            <!-- Aula -->
+                            <div class="form-group col-md-6" id="aula_id">
+                                <label for="aula_id"><i class="fas fa-door-open"></i> Aula:</label>
+                                <select class="form-control" name="aula_id">
+                                    <option value="">--Seleccione--</option>
+                                    @foreach($aulas as $aula)
+                                        <option value="{{ $aula->id }}" {{ old('aula_id', $cohorte->aula_id) == $aula->id ? 'selected' : '' }}>{{ $aula->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Fecha de Inicio -->
+                            <div class="form-group col-md-6">
+                                <label for="fecha_inicio"><i class="fas fa-calendar-day"></i> Fecha de Inicio:</label>
+                                <input id="fecha_inicio" type="date" class="form-control" name="fecha_inicio" value="{{ old('fecha_inicio', $cohorte->fecha_inicio) }}">
+                            </div>
+
+                            <!-- Fecha de Fin -->
+                            <div class="form-group col-md-6">
+                                <label for="fecha_fin"><i class="fas fa-calendar-check"></i> Fecha de Fin:</label>
+                                <input id="fecha_fin" type="date" class="form-control" name="fecha_fin" value="{{ old('fecha_fin', $cohorte->fecha_fin) }}">
                             </div>
                         </div>
 
-                        <div class="form-group row">
-                            <label for="fecha_inicio" class="col-md-4 col-form-label text-md-right">{{ __('Fecha de Inicio') }}</label>
-                            <div class="col-md-6">
-                                <input id="fecha_inicio" type="date" class="form-control @error('fecha_inicio') is-invalid @enderror" name="fecha_inicio" value="{{ old('fecha_inicio', $cohorte->fecha_inicio) }}" required>
-                                @error('fecha_inicio')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-                
-                        <div class="form-group row">
-                            <label for="fecha_fin" class="col-md-4 col-form-label text-md-right">{{ __('Fecha de Fin') }}</label>
-                            <div class="col-md-6">
-                                <input id="fecha_fin" type="date" class="form-control @error('fecha_fin') is-invalid @enderror" name="fecha_fin" value="{{ old('fecha_fin', $cohorte->fecha_fin) }}" required>
-                                @error('fecha_fin')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-                
-                        
-                        <div class="form-group row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Actualizar') }}
-                                </button>
-                            </div>
+                        <div class="form-group text-center">
+                            <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Actualizar</button>
                         </div>
                     </form>
                 </div>
-                
             </div>
         </div>
     </div>
-</div>   
+</div>
+@stop
+
+@section('js')
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const modalidadSelect = document.getElementById("modalidad");
+        const aulaSelect = document.getElementById("aula_id");
+
+        // Ocultar el campo de selección de aulas si la modalidad es virtual
+        if (modalidadSelect.value === "virtual") {
+            aulaSelect.style.display = "none";
+        }
+
+        modalidadSelect.addEventListener("change", function() {
+            if (modalidadSelect.value === "virtual") {
+                aulaSelect.style.display = "none";
+                aulaSelect.selectedIndex = 0; // Deseleccionar cualquier valor
+            } else {
+                aulaSelect.style.display = "block"; // Mostrar campo si no es virtual
+            }
+        });
+    });
+</script>
 @stop

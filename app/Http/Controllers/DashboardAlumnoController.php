@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Alumno;
+use App\Models\Asignatura;
 use App\Models\Nota;
 use App\Models\Docente;
+use App\Models\Matricula;
 
 class DashboardAlumnoController extends Controller
 {
@@ -35,7 +37,7 @@ class DashboardAlumnoController extends Controller
         ]);
 
         $asignaturas = $alumno->matriculas->map->asignatura;
-       
+
         // Retornar la vista con los datos
         return view('dashboard.alumno', compact('asignaturas', 'alumno'));
     }
@@ -44,44 +46,44 @@ class DashboardAlumnoController extends Controller
         $perPage = $request->input('perPage', 10);
         $user = auth()->user();
 
-        // Buscar el alumno basado en nombre1, apellidop, y email_institucional del usuario autenticado
+        // Buscar al alumno por su nombre, apellido y email
         $alumno = Alumno::where('nombre1', $user->name)
             ->where('apellidop', $user->apellido)
             ->where('email_institucional', $user->email)
             ->firstOrFail();
 
-        // Eager load de relaciones necesarias
-        $alumno->load([
-            'matriculas.asignatura.cohortes.aula',
-            'matriculas.asignatura.notas' => function ($query) use ($alumno) {
-                $query->where('alumno_dni', $alumno->dni);
-            }
-        ]);
+        // Obtener las matriculas del alumno
+        $matriculas = Matricula::where('alumno_dni', $alumno->dni)->get();
 
-        
-        $asignaturas = $alumno->matriculas->map->asignatura;
-        $notas = $asignaturas->mapWithKeys(function ($asignatura) use ($alumno) {
-    
-            $nota = $asignatura->notas->first();
-            $cohorte = $asignatura->cohortes->first();
-            $docente = $cohorte ? $cohorte->docentes->first() : null;
+        // Procesar los datos para obtener el array con la información requerida
+        $notasData = $matriculas->mapWithKeys(function ($matricula) use ($alumno) {
+            // Obtener la asignatura de la matrícula
+            $asignatura = $matricula->asignatura;
+
+            // Obtener el docente asociado a la asignatura de la matrícula
+            $docente = $matricula->docente;
+
+            // Obtener las notas relacionadas con la asignatura, el alumno y el docente
+            $nota = Nota::where('alumno_dni', $alumno->dni)
+                ->where('asignatura_id', $asignatura->id)
+                ->where('docente_dni', $docente->dni)
+                ->first();
 
             return [
                 $asignatura->nombre => [
-                    'actividades_aprendizaje' => $nota->nota_actividades ?? 'N/A',
-                    'practicas_aplicacion' => $nota->nota_practicas ?? 'N/A',
-                    'aprendizaje_autonomo' => $nota->nota_autonomo ?? 'N/A',
-                    'examen_final' => $nota->examen_final ?? 'N/A',
-                    'recuperacion' => $nota->recuperacion ?? 'N/A',
-                    'total' => $nota->total ?? 'N/A',
-                    'aula' => $cohorte && $cohorte->aula ? $cohorte->aula->nombre : 'N/A',
-                    'paralelo' => $cohorte && $cohorte->aula && $cohorte->aula->paralelo ? $cohorte->aula->paralelo : 'N/A',
-                    'docente' => $docente ? $docente->nombre1 . ' ' . $docente->nombre2 . ' ' . $docente->apellidop . ' ' . $docente->apellidom : 'N/A',
+                    'docente_nombre' => $docente ? $docente->nombre1 . ' ' . $docente->nombre2 . ' ' . $docente->apellidop . ' ' . $docente->apellidom : 'N/A',
                     'docente_image' => $docente ? $docente->image : 'default_image_path.jpg',
+                    'nota_actividades' => $nota ? $nota->nota_actividades : 'N/A',
+                    'nota_practicas' => $nota ? $nota->nota_practicas : 'N/A',
+                    'nota_autonomo' => $nota ? $nota->nota_autonomo : 'N/A',
+                    'examen_final' => $nota ? $nota->examen_final : 'N/A',
+                    'recuperacion' => $nota ? $nota->recuperacion : 'N/A',
+                    'total' => $nota ? $nota->total : 'N/A',
                 ]
             ];
         });
+
         // Retornar la vista con los datos
-        return view('notas.alumnos', compact('asignaturas', 'notas', 'perPage', 'alumno'));
+        return view('notas.alumnos', compact('notasData', 'perPage', 'alumno'));
     }
 }

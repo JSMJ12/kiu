@@ -77,6 +77,14 @@ class Alumno extends Model
     {
         return $this->hasMany(Tesis::class, 'alumno_dni', 'dni');
     }
+    public function retiros()
+    {
+        return $this->hasMany(Retiro::class, 'alumno_dni');
+    }
+    public function titulaciones()
+    {
+        return $this->hasMany(Titulacion::class, 'alumno_dni', 'dni');
+    }
     protected static function boot()
     {
         parent::boot();
@@ -95,6 +103,10 @@ class Alumno extends Model
 
         // Incrementa el valor de 'registro'
         return $lastRegistro ? $lastRegistro + 1 : 1;
+    }
+    public function examenComplexivo()
+    {
+        return $this->hasOne(ExamenComplexivo::class, 'alumno_dni', 'dni');
     }
     
 }

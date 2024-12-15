@@ -7,6 +7,7 @@ use App\Models\Nota;
 use App\Models\Asignatura;
 use App\Models\Alumno;
 use App\Models\Matricula;
+use App\Models\TasaTitulacion;
 use App\Models\User;
 
 class NotaController extends Controller
@@ -80,13 +81,42 @@ class NotaController extends Controller
         if (
             $alumno->notas->count() > 0 &&
             $alumno->maestria->asignaturas->count() > 0 &&
-            $alumno->notas->count() == $alumno->maestria->asignaturas->count()
+            $alumno->notas->count() == $alumno->maestria->asignaturas->count() &&
+            $alumno->notas->every(function ($nota) {
+                return $nota->total >= 7;
+            })
         ) {
             // Buscar el usuario asociado al alumno por email institucional
             $usuario = User::where('email', $alumno->email_institucional)->first();
+            $matricula = $alumno->matriculas()->first();
+            if (!$matricula) {
+                return redirect()->back()->with('error', 'Matrícula no encontrada');
+            }
+
+            // Obtener el cohorte y la maestría
+            $cohorteId = $matricula->cohorte_id;
+            $maestriaId = $alumno->maestria_id;
+
+            // Buscar o crear la tasa de titulación para el cohorte y la maestría
+            $tasaTitulacion = TasaTitulacion::where('cohorte_id', $cohorteId)
+                ->where('maestria_id', $maestriaId)
+                ->first();
+
+            if ($tasaTitulacion) {
+                $tasaTitulacion->numero_maestrantes_aprobados += 1; 
+                $tasaTitulacion->save(); 
+
+
+            } else {
+                // Si no existe, lo creamos con valores iniciales
+                TasaTitulacion::create([
+                    'cohorte_id' => $cohorteId,
+                    'maestria_id' => $maestriaId,
+                    'numero_maestrantes_aprobados' => 1,
+                ]);
+            }
 
             if ($usuario) {
-                // Verificar si el usuario no tiene el rol antes de asignarlo
                 if (!$usuario->hasRole('Titulado_proceso')) {
                     $usuario->assignRole('Titulado_proceso');
                 }

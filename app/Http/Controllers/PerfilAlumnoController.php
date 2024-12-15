@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Alumno;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class PerfilAlumnoController extends Controller
@@ -115,6 +116,9 @@ class PerfilAlumnoController extends Controller
             $alumno->image = $path;
         }
         $alumno->save();
+        $usuario = User::where('email', $alumno->email_institucional)->first();
+        $usuario->image = $path;
+        $usuario->save();
 
         return redirect()->route('edit_datosAlumnos')->with('success', 'Perfil actualizado con éxito.');
     }

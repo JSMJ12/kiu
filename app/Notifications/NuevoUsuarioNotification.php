@@ -41,7 +41,6 @@ class NuevoUsuarioNotification extends Notification
      */
     public function toMail($notifiable)
     {
-        \Log::info('Generando notificación para: ' . $this->usuario->name);
         return (new MailMessage)
             ->subject('¡Bienvenido a POSGRADO SGA!')
             ->greeting('¡Hola ' . $this->nombre . '!')

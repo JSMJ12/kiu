@@ -53,4 +53,8 @@ class Cohorte extends Model
     {
         return $this->hasMany(CohorteDocente::class, 'docente_dni');
     }
+    public function tasaTitulacion()
+    {
+        return $this->hasMany(TasaTitulacion::class);
+    }
 }

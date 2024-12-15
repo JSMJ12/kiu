@@ -2,12 +2,10 @@
 
 namespace App\Notifications;
 
-use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Bus\Queueable;
 use Carbon\Carbon;
-
 
 class NewMessageNotification2 extends Notification
 {
@@ -20,35 +18,28 @@ class NewMessageNotification2 extends Notification
         $this->message = $message;
     }
 
+    /**
+     * Define los canales de notificación.
+     */
     public function via($notifiable)
     {
-        return ['mail', 'broadcast', 'database'];
+        return ['mail', 'database']; // Se envía solo por email y se guarda en la base de datos.
     }
 
+    /**
+     * Define el formato de la notificación para email.
+     */
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->line('Tienes un nuevo mensaje!')
-            ->action('Ver mensaje', route('messages.index'));
+            ->line('¡Tienes un nuevo mensaje!')
+            ->action('Ver mensaje', route('messages.index'))
+            ->line('Gracias por usar nuestra aplicación.');
     }
 
-    public function toBroadcast($notifiable)
-    {
-        $senderName = $this->message->sender ? $this->message->sender->name : 'Remitente Desconocido';
-
-        return new BroadcastMessage([
-            'type' => 'NewMessageNotification',
-            'message' => $this->message->message,
-            'sender' => [
-                'name' => $senderName,
-            ],
-            'receiver' => [
-                'name' => $this->message->receiver->name,
-            ],
-            'link' => route('messages.index'),
-        ]);
-    }
-
+    /**
+     * Define el formato de la notificación para la base de datos.
+     */
     public function toArray($notifiable)
     {
         return [
@@ -62,10 +53,5 @@ class NewMessageNotification2 extends Notification
             ],
             'time' => Carbon::now()->toDateTimeString(),
         ];
-    }
-
-    public function toMailUsing($notifiable, $recipient)
-    {
-        return parent::toMailUsing($notifiable, $recipient)->introLines([]);
     }
 }

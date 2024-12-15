@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Asignatura;
 use Illuminate\Http\Request;
 use App\Models\Docente;
 use App\Models\User;
@@ -10,6 +11,8 @@ use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\File;
 use App\Models\CalificacionVerificacion;
+use App\Models\Cohorte;
+use App\Models\CohorteDocente;
 
 class DocenteController extends Controller
 {
@@ -33,32 +36,42 @@ class DocenteController extends Controller
                         $docente->apellidop . '<br>' . $docente->apellidom;
                 })
                 ->addColumn('acciones', function ($docente) {
-                    $acciones = '<div style="display: flex; gap: 10px; align-items: center;">
-                                <a href="' . route('docentes.edit', $docente->dni) . '" 
-                                   class="btn btn-primary custom-btn btn-sm" title="Editar">
-                                   <i class="fas fa-edit"></i>
-                                </a>
-                                <a href="' . route('asignaturas_docentes.create1', $docente->dni) . '" 
-                                   class="btn btn-success custom-btn btn-sm" title="Agregar Asignaturas">
-                                   <i class="fas fa-plus"></i>
-                                </a>
-                                <a href="' . route('cohortes_docentes.create1', $docente->dni) . '" 
-                                   class="btn btn-warning custom-btn btn-sm" title="Agregar Cohortes">
-                                   <i class="fas fa-plus"></i>
-                                </a>
-                                <button type="button" class="btn btn-warning btn-sm btn-modal-asignatura" 
-                                          data-id="' . $docente->dni . '" 
-                                          data-type="asignaturas" 
-                                          title="Ver Asignaturas">
-                                          <i class="fas fa-eye"></i>
-                                      </button>
-                                <button type="button" class="btn btn-info btn-sm btn-modal-cohortes" 
-                                        data-dni="' . $docente->dni . '" 
-                                        data-type="cohortes" 
-                                        title="Ver Cohortes">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                             </div>';
+                    $acciones = '<div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">';
+                    $acciones .= '<a href="' . route('docentes.edit', $docente->dni) . '" 
+                                     class="btn btn-outline-primary btn-sm" 
+                                     style="display: flex; align-items: center; gap: 5px;" 
+                                     title="Editar">
+                                     <i class="fas fa-edit"></i><span>Editar</span>
+                                 </a>';
+                    $acciones .= '<a href="' . route('asignaturas_docentes.create1', $docente->dni) . '" 
+                                     class="btn btn-outline-success btn-sm" 
+                                     style="display: flex; align-items: center; gap: 5px;" 
+                                     title="Agregar Asignaturas">
+                                     <i class="fas fa-plus"></i><span>Asignaturas</span>
+                                 </a>';
+                    $acciones .= '<a href="' . route('cohortes_docentes.create1', $docente->dni) . '" 
+                                     class="btn btn-outline-warning btn-sm" 
+                                     style="display: flex; align-items: center; gap: 5px;" 
+                                     title="Agregar Cohortes">
+                                     <i class="fas fa-plus"></i><span>Cohortes</span>
+                                 </a>';
+                    $acciones .= '<button type="button" 
+                                           class="btn btn-outline-secondary btn-sm btn-modal-asignatura" 
+                                           style="display: flex; align-items: center; gap: 5px;" 
+                                           data-id="' . $docente->dni . '" 
+                                           data-type="asignaturas" 
+                                           title="Ver Asignaturas">
+                                           <i class="fas fa-eye"></i><span>Ver Asignaturas</span>
+                                       </button>';
+                    $acciones .= '<button type="button" 
+                                           class="btn btn-outline-info btn-sm btn-modal-cohortes" 
+                                           style="display: flex; align-items: center; gap: 5px;" 
+                                           data-dni="' . $docente->dni . '" 
+                                           data-type="cohortes" 
+                                           title="Ver Cohortes">
+                                           <i class="fas fa-eye"></i><span>Ver Cohortes</span>
+                                       </button>';
+                    $acciones .= '</div>';
 
                     return $acciones;
                 })
@@ -78,21 +91,21 @@ class DocenteController extends Controller
 
     public function obtenerCohortes($dni)
     {
-        // Buscar el docente por su DNI y cargar las relaciones necesarias
-        $docente = Docente::where('dni', $dni)
-            ->with(['cohortes' => function ($query) {
-                // Asegurar que solo se carguen cohortes únicas
-                $query->distinct();
-            }, 'cohortes.asignaturas', 'cohortes.maestria', 'cohortes.aula'])
-            ->first();
+        $docente = Docente::where('dni', $dni)->first();
 
         if (!$docente) {
             return response()->json(['error' => 'Docente no encontrado.'], 404);
         }
 
-        // Preparar los datos de los cohortes y asignaturas
-        $cohortes = $docente->cohortes->map(function ($cohorte) use ($docente) {
-            // Evitar duplicados y procesar la información
+        $cohortesDocente = CohorteDocente::where('docente_dni', $dni)->get();
+
+        $cohortes = $cohortesDocente->groupBy('cohort_id')->map(function ($items, $cohortId) {
+            $cohorte = Cohorte::find($cohortId);
+
+            if (!$cohorte) {
+                return null;
+            }
+
             return [
                 'id' => $cohorte->id,
                 'nombre' => $cohorte->nombre,
@@ -100,29 +113,39 @@ class DocenteController extends Controller
                 'aula' => $cohorte->aula ? $cohorte->aula->nombre : 'No disponible',
                 'paralelo' => $cohorte->aula && $cohorte->aula->paralelo ? $cohorte->aula->paralelo : 'No disponible',
                 'maestria' => $cohorte->maestria->nombre,
-                'asignaturas' => $cohorte->asignaturas->map(function ($asignatura) use ($docente, $cohorte) {
-                    $calificacion = $asignatura->calificacionVerificaciones()
-                        ->where('docente_dni', $docente->dni)
-                        ->where('cohorte_id', $cohorte->id)
+                'asignaturas' => $items->map(function ($item) use ($cohorte) {
+                    $asignatura = Asignatura::find($item->asignatura_id);
+
+                    if (!$asignatura) {
+                        return null;
+                    }
+
+                    // Obtener la calificación de acuerdo al cohorte_id y asignatura_id
+                    $calificacion = CalificacionVerificacion::where('asignatura_id', $item->asignatura_id)
+                        ->where('docente_dni', $item->docente_dni)
+                        ->whereHas('asignatura', function ($query) use ($cohorte) {
+                            // Suponiendo que la asignatura tiene un cohorte_id que corresponde al cohorte actual
+                            $query->where('cohorte_id', $cohorte->id);
+                        })
                         ->first();
 
                     return [
                         'id' => $asignatura->id,
                         'nombre' => $asignatura->nombre,
-                        'calificado' => $calificacion ? ($calificacion->calificado ? 'Calificado' : 'No calificado') : 'No calificado',
-                        'editar' => $calificacion ? $calificacion->editar : false,
+                        'calificado' => $calificacion ? ($calificacion->calificado ? 'Calificado' : 'No calificado') : 'No disponible',
+                        'editar' => $calificacion ? $calificacion->editar : 0,
                     ];
-                }),
+                })->filter(), // Filtrar nulls si hay asignaturas no válidas
             ];
-        });
+        })->filter(); // Filtrar nulls si hay cohortes no válidos
+
 
         // Incluir el nombre del docente en la respuesta
         return response()->json([
-            'docente_nombre' => $docente,  // Aquí se pasa el nombre completo del docente
-            'cohortes' => $cohortes
+            'docente_nombre' => $docente->nombre_completo, // Asegúrate de que 'nombre_completo' es un atributo del modelo Docente
+            'cohortes' => $cohortes->values(), // Convertir a array indexado
         ]);
     }
-
 
 
     public function guardarCambios(Request $request)

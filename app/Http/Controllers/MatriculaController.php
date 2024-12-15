@@ -8,6 +8,7 @@ use App\Models\Alumno;
 use App\Models\Matricula;
 use App\Models\Cohorte;
 use App\Models\Maestria;
+use App\Models\TasaTitulacion;
 use Illuminate\Support\Facades\DB;
 
 class MatriculaController extends Controller
@@ -23,7 +24,7 @@ class MatriculaController extends Controller
         $maestria = Maestria::findOrFail($alumno->maestria_id);
 
         // Filtrar cohortes con aforo mayor a 0
-        $cohortes = $maestria->cohorte->filter(function ($cohorte) {
+        $cohortes = $maestria->cohortes->filter(function ($cohorte) {
             return $cohorte->aforo > 0;
         });
 
@@ -79,6 +80,31 @@ class MatriculaController extends Controller
                 // Restar 1 al aforo del cohorte
                 $cohorte->aforo = $cohorte->aforo - 1;
                 $cohorte->save();
+                $alumno = Alumno::where('dni', $alumno_dni)->first();
+
+                if (!$alumno) {
+                    return redirect()->back()->with('error', 'Alumno no encontrado');
+                }
+
+                $maestriaId = $alumno->maestria_id;
+
+                // Buscar o crear la tasa de titulación para el cohorte y la maestría
+                $tasaTitulacion = TasaTitulacion::where('cohorte_id', $cohorte_id)
+                    ->where('maestria_id', $maestriaId)
+                    ->first();
+
+                if ($tasaTitulacion) {
+                    $tasaTitulacion->numero_matriculados += 1; 
+                    $tasaTitulacion->save(); 
+    
+                } else {
+                    // Si no existe, lo creamos con valores iniciales
+                    TasaTitulacion::create([
+                        'cohorte_id' => $cohorte_id,
+                        'maestria_id' => $maestriaId,
+                        'numero_matriculados' => 1,
+                    ]);
+                }
 
                 // Actualizar el aforo de las asignaturas en el cohorte
                 $cohorte->asignaturas()->sync($asignatura_ids, false);

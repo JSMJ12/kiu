@@ -46,13 +46,13 @@
                     {
                         data: 'alumno',
                         name: 'alumno'
-                    }, 
+                    },
                     {
                         data: 'contacto',
                         name: 'contacto',
                         orderable: false,
                         searchable: false
-                    }, 
+                    },
                     {
                         data: 'acciones',
                         name: 'acciones',
@@ -65,6 +65,45 @@
                 }
             });
 
+            // Delegar eventos para botones generados dinámicamente
+            $('#tesis-table').on('click', '.certificar-alumno', function() {
+                const alumnoDni = $(this).data('dni');
+
+                fetch('{{ route('certificar.alumno') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            alumno_dni: alumnoDni
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                console.error('Error:', text);
+                                throw new Error('Error en la respuesta del servidor: ' +
+                                    response.statusText);
+                            });
+                        }
+                        return response.blob();
+                    })
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = 'certificacion_titulacion.pdf';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error.message);
+                        alert('Ocurrió un error al generar la certificación.');
+                    });
+            });
         });
     </script>
 @endpush

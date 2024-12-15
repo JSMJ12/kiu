@@ -45,7 +45,7 @@ class CohorteDocenteController extends Controller
             }
 
             $maestria = $asignatura->maestria;
-            $cohortes = $maestria->cohorte()->whereDate('fecha_fin', '>', Carbon::now())->get();
+            $cohortes = $maestria->cohortes()->whereDate('fecha_fin', '>', Carbon::now())->get();
 
             if ($cohortes->isNotEmpty()) {
                 $maestriaCohortes[] = [
@@ -65,7 +65,7 @@ class CohorteDocenteController extends Controller
                     continue;
                 }
 
-                $cohortes = $maestria->cohorte()->whereDate('fecha_fin', '>', Carbon::now())->get();
+                $cohortes = $maestria->cohortes()->whereDate('fecha_fin', '>', Carbon::now())->get();
 
                 if ($cohortes->isNotEmpty()) {
                     $maestriaCohortes[] = [

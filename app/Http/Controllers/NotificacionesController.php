@@ -35,17 +35,4 @@ class NotificacionesController extends Controller
         ]);
     }
 
-
-    public function destroy($id)
-    {
-        // Encontrar la notificación por su ID
-        $notificacion = Auth::user()->notifications()->findOrFail($id);
-
-        // Borrar la notificación
-        $notificacion->delete();
-
-        // Redireccionar de vuelta a la página de notificaciones con un mensaje de éxito
-        return redirect()->route('notificaciones.index')->with('success', 'Notificación eliminada correctamente.');
-    }
-
 }

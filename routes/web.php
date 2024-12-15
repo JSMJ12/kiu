@@ -37,6 +37,9 @@ use App\Http\Controllers\PerfilAlumnoController;
 use App\Http\Controllers\TesisController;
 use App\Http\Controllers\CoordinadorController;
 use App\Http\Controllers\DescuentoController;
+use App\Http\Controllers\Examen_ComplexivoController;
+use App\Http\Controllers\TitulacionAlumnoController;
+use App\Http\Controllers\TitulacionesController;
 use App\Http\Controllers\TutoriaController;
 
 /*
@@ -101,6 +104,8 @@ Route::post('/dashboard/docente/update-silabo', [DashboardDocenteController::cla
 
 //ALUMNOS
 Route::resource('alumnos', AlumnoController::class)->middleware(['can:dashboard_secretario']);
+Route::post('/alumno/retirarse_maestria/{dni}', [AlumnoController::class, 'retirarse'])->name('alumno.retirarse');
+
 
 //ASIGNATURA DOCENTES
 Route::resource('asignaturas_docentes', AsignaturaDocenteController::class)->middleware(['can:dashboard_secretario']);
@@ -218,6 +223,8 @@ Route::get('/tesis/descargar/pdf', [TesisController::class, 'downloadPDF'])->nam
 Route::post('/tesis/aceptar/{id}', [TesisController::class, 'aceptarTema'])->name('tesis.aceptar');
 Route::post('/tesis/rechazar/{id}', [TesisController::class, 'rechazarTema'])->name('tesis.rechazar');
 Route::post('/tesis/asignar-tutor/{id}', [TesisController::class, 'asignarTutor'])->name('tesis.asignarTutor');
+Route::post('/titular-alumno', [TitulacionesController::class, 'store'])->name('titulaciones_alumno.store');
+
 
 //Tutorias
 
@@ -227,5 +234,17 @@ Route::middleware(['auth', 'can:revisar_tesis'])->group(function () {
     Route::post('/tutorias', [TutoriaController::class, 'store'])->name('tutorias.store');
     Route::put('/tutorias/{id}/realizar', [TutoriaController::class, 'updateEstado'])->name('tutorias.realizar');
     Route::delete('tutorias/{id}', [TutoriaController::class, 'destroy'])->name('tutorias.delete');
+    Route::get('/certificar-alumno/tutor', [TesisController::class, 'certificacion'])->name('certificar.alumno');
+
 });
 Route::get('/tesis/{tesisId}/tutorias', [TutoriaController::class, 'listar'])->name('tutorias.listar');
+
+//EXAMEN COMPLEXIVO
+Route::get('/examen-complexivo/index', [Examen_ComplexivoController::class, 'index'])->name('examen_complexivo.index');
+Route::post('/examen-complexivo/store', [Examen_ComplexivoController::class, 'store'])->name('examen_complexivo.store');
+Route::get('/examen-complexivo/calificar', [Examen_ComplexivoController::class, 'calificar_examen'])->name('examen-complexivo.calificar');
+Route::post('/examen-complexivo/actualizarNotaYFechaGraduacion', [Examen_ComplexivoController::class, 'actualizarNotaYFechaGraduacion'])->name('examen-complexivo.actualizarNotaYFechaGraduacion');
+
+
+//TASA TITULACION
+Route::post('/titulacion-alumno/proceso', [TitulacionAlumnoController::class, 'store'])->name('titulacion_alumno.store');

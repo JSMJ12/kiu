@@ -14,7 +14,7 @@ class Maestria extends Model
         'nombre', 'status', 'coordinador', 'inscripcion', 'matricula', 'arancel'
     ];
     
-    public function cohorte()
+    public function cohortes()
     {
         return $this->hasMany(Cohorte::class);
     }
@@ -41,5 +41,9 @@ class Maestria extends Model
     public function coordinador()
     {
         return $this->belongsTo(Docente::class, 'coordinador');
+    }
+    public function tasaTitulacion()
+    {
+        return $this->hasMany(TasaTitulacion::class);
     }
 }

@@ -8,9 +8,12 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Alumno;
 use App\Models\Docente;
+use App\Models\TasaTitulacion;
 use Illuminate\Support\Facades\Notification;
 use App\Models\User;
 use App\Notifications\TesisAceptadaNotificacion;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Carbon;
 use Yajra\DataTables\DataTables;
 
 class TesisController extends Controller
@@ -26,7 +29,11 @@ class TesisController extends Controller
                 : redirect()->back()->withErrors(['error' => 'No estás asignado a ninguna maestría.']);
         }
 
-        $maestriaId = $docente->maestria()->first()->id;
+        $maestria = $docente->maestria()->first();
+
+        $maestriaId = $maestria->id;
+
+        $cohortes = $maestria->cohortes;
 
         if ($request->ajax()) {
             $solicitudes = Tesis::with('alumno', 'tutor')
@@ -60,7 +67,7 @@ class TesisController extends Controller
         }
 
         $docentes = Docente::all();
-        return view('titulacion.solicitudes', compact('docentes'));
+        return view('titulacion.solicitudes', compact('docentes', 'cohortes'));
     }
     public function aceptarTema($id)
     {
@@ -119,45 +126,75 @@ class TesisController extends Controller
         return response()->json(['success' => 'Tema rechazado correctamente.']);
     }
 
-
     public function store(Request $request)
     {
-        // Obtener el alumno asociado al usuario autenticado
         $alumno = Alumno::where('email_institucional', Auth::user()->email)->first();
 
         if (!$alumno) {
             return redirect()->route('tesis.create')->with('error', 'Alumno no encontrado. Verifique que su correo institucional esté registrado.');
         }
 
-        // Paso 1: Validación de los datos del tema y descripción
         $validatedData = $request->validate([
-            'tema' => 'required|string|max:255',
-            'descripcion' => 'required|string',
+            'tema' => 'nullable|string|max:255',
+            'descripcion' => 'nullable|string',
         ]);
 
-        // Verifica si el paso 2 ya fue enviado (se cargó el archivo PDF)
-        if ($request->hasFile('solicitud_pdf')) {
-            // Paso 2: Validación del archivo PDF
+        $hasFile = $request->hasFile('solicitud_pdf');
+        if ($hasFile) {
             $request->validate([
                 'solicitud_pdf' => 'required|file|mimes:pdf|max:2048',
             ]);
-
-            // Subir el archivo PDF de solicitud
             $pdfPath = $request->file('solicitud_pdf')->store('solicitudes_pdf', 'public');
+        }
 
-            // Crear una nueva entrada en la tabla 'tesis'
-            $tesis = new Tesis();
-            $tesis->alumno_dni = $alumno->dni; // Usar el DNI del alumno autenticado
-            $tesis->tema = $validatedData['tema'];
-            $tesis->descripcion = $validatedData['descripcion'];
-            $tesis->solicitud_pdf = $pdfPath;
-            $tesis->estado = 'pendiente'; // Estado inicial del proceso
-            $tesis->save();
+        $tesis = new Tesis();
+        $tesis->alumno_dni = $alumno->dni;
+        $tesis->tema = $validatedData['tema'] ?? null; // Asigna null si no está presente
+        $tesis->descripcion = $validatedData['descripcion'] ?? null; // Asigna null si no está presente
+        $tesis->solicitud_pdf = $hasFile ? $pdfPath : null; // Si no hay archivo, será null
+        $tesis->estado = 'pendiente';
+        $tesis->save();
 
+
+        // Determinar el tipo
+        if (empty($validatedData['tema']) && empty($validatedData['descripcion']) && !$hasFile) {
+            $tesis->tipo = 'examen complexivo';
+            // Obtener la primera matrícula del alumno
+            $matricula = $alumno->matriculas()->first();
+            if (!$matricula) {
+                return redirect()->back()->with('error', 'Matrícula no encontrada');
+            }
+
+            // Obtener el cohorte y la maestría
+            $cohorteId = $matricula->cohorte_id;
+            $maestriaId = $alumno->maestria_id;
+
+            // Buscar o crear la tasa de titulación para el cohorte y la maestría
+            $tasaTitulacion = TasaTitulacion::where('cohorte_id', $cohorteId)
+                ->where('maestria_id', $maestriaId)
+                ->first();
+
+            if ($tasaTitulacion) {
+                $tasaTitulacion->examen_complexivo += 1;
+                $tasaTitulacion->save();
+            } else {
+                // Si no existe, lo creamos con valores iniciales
+                TasaTitulacion::create([
+                    'cohorte_id' => $cohorteId,
+                    'maestria_id' => $maestriaId,
+                    'examen_complexivo' => 1,
+                ]);
+            }
+        } else {
+            $tesis->tipo = $request->input('tipo');
+        }
+
+        $tesis->save();
+
+        if ($hasFile) {
             return redirect()->route('dashboard_alumno')->with('success', 'Solicitud de aprobación de tema enviada correctamente.');
         }
 
-        // Si no se ha llegado al paso 2, solo se valida el tema y descripción
         return redirect()->route('tesis.create')->with('warning', 'Por favor complete todos los pasos del formulario.');
     }
 
@@ -168,10 +205,9 @@ class TesisController extends Controller
         $dniAlumno = $alumno->dni;
 
         $tesis = Tesis::where('alumno_dni', $dniAlumno)->with('tutorias')->first();
-    
-        return view('titulacion.proceso', compact('tesis'));
-    }
 
+        return view('titulacion.proceso', compact('tesis', 'alumno'));
+    }
 
     public function downloadPDF()
     {
@@ -203,5 +239,36 @@ class TesisController extends Controller
         $tesis = Tesis::with('alumno', 'tutor')->findOrFail($id);
 
         return view('tesis.show', compact('tesis'));
+    }
+
+    public function certificacion(Request $request)
+    {
+        $user = auth()->user();
+        $docente = Docente::where('email', $user->email)->first();
+
+        if (!$docente) {
+            return response()->json(['error' => 'No se encontró al docente asociado al usuario.'], 404);
+        }
+
+        $alumnoDni = $request->input('alumno_dni');
+        $alumno = Alumno::with('tesis.tutorias')
+            ->where('dni', $alumnoDni)
+            ->first();
+
+        if (!$alumno) {
+            return response()->json(['error' => 'No se encontró al alumno con el DNI proporcionado.'], 404);
+        }
+
+        $fechaActual = Carbon::now()->locale('es')->isoFormat('LL');
+
+        $pdfFileName = preg_replace('/[^A-Za-z0-9_\-]/', '', $docente->apellidop . $docente->nombre1 . $alumno->dni) . '_certificacion_titulacion.pdf';
+
+        return PDF::loadView('titulacion.certificado_tutor', compact(
+            'alumno',
+            'docente',
+            'fechaActual',
+        ))
+            ->setPaper('A4', 'portrait')
+            ->download($pdfFileName);
     }
 }

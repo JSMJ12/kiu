@@ -71,203 +71,96 @@
 
 <script>
     $(document).ready(function() {
-        $('#notificacionesModalLink').click(function(event) {
-            event.preventDefault(); // Evitar el comportamiento predeterminado del enlace
+        const notificationModal = $('#notificacionesModal');
+        const notificationBody = notificationModal.find('.modal-body');
 
-            // Realizar una solicitud AJAX para obtener los datos de las notificaciones
-            $.get('/notificaciones', function(data) {
-                // Limpiar el contenido del modal antes de actualizarlo
-                $('#notificacionesModal .modal-body').empty();
+        function renderNotification(type, id, senderName, message) {
+            const senderInfo = senderName ? `De: ${senderName}<br>` : '';
+            return `<li data-message-id="${id}" data-type="${type}">${senderInfo}Mensaje: ${message}</li>`;
+        }
 
-                // Verificar si hay notificaciones
-                var modalContent;
-                if (data.notificaciones && data.notificaciones.length > 0) {
-                    // Construir el contenido del modal con los datos de las notificaciones
-                    modalContent = '<ul>';
-                    data.notificaciones.forEach(function(notificacion) {
-                        var mensaje;
-                        var remitente;
+        function handleNotificationClick() {
+            const messageId = $(this).data('message-id');
+            const notificationType = $(this).data('type');
 
-                        if (notificacion.data.type === 'NewMessageNotification') {
-                            mensaje = notificacion.data.message;
-                            remitente = notificacion.data.sender.name;
-                            modalContent += '<li data-message-id="' + notificacion.id +
-                                '" data-type="NewMessageNotification">De: ' +
-                                remitente + '<br>Mensaje: ' + mensaje + '</li>';
-                        } else if (notificacion.data.type ===
-                            'PostulanteAceptadoNotification') {
-                            mensaje = notificacion.data.message;
-                            modalContent += '<li data-message-id="' + notificacion.id +
-                                '" data-type="PostulanteAceptadoNotification">Mensaje: ' +
-                                mensaje + '</li>';
-                        } else if (notificacion.data.type ===
-                            'SubirArchivoNotification') {
-                            mensaje = notificacion.data.message;
-                            modalContent += '<li data-message-id="' + notificacion.id +
-                                '" data-type="PostulanteAceptadoNotification">Mensaje: ' +
-                                mensaje + '</li>';
+            const redirectMap = {
+                'NewMessageNotification': '/mensajes/buzon/',
+                'PostulanteAceptadoNotification': '/inicio',
+                'SubirArchivoNotification': '/inicio',
+                'MatriculaExito': '/'
+            };
+
+            if (redirectMap[notificationType]) {
+                window.location.href = redirectMap[notificationType];
+            }
+        }
+
+        function updateModalContent(data) {
+            notificationBody.empty();
+
+            if (data.notificaciones && data.notificaciones.length > 0) {
+                const notifications = data.notificaciones.map(notificacion => {
+                    const {
+                        id,
+                        data: {
+                            type,
+                            message,
+                            sender
                         }
-                    });
-                    modalContent += '</ul>';
-                } else {
-                    // Si no hay notificaciones, mostrar un mensaje en el modal
-                    modalContent = '<p>No hay notificaciones.</p>';
-                }
+                    } = notificacion;
+                    return renderNotification(type, id, sender?.name, message);
+                }).join('');
+                notificationBody.html(`<ul>${notifications}</ul>`);
+                notificationBody.find('li').click(handleNotificationClick);
+            } else {
+                notificationBody.html('<p>No hay notificaciones.</p>');
+            }
 
-                // Agregar el contenido al cuerpo del modal
-                $('#notificacionesModal .modal-body').html(modalContent);
+            $('#cantidadDeNuevasNotificaciones').text(data.cantidadNotificacionesNuevas);
+        }
 
-                // Agregar un evento de clic a cada mensaje para redirigir
-                $('#notificacionesModal .modal-body li').click(function() {
-                    var messageId = $(this).data('message-id');
-                    var notificationType = $(this).data('type');
-
-                    if (notificationType === 'NewMessageNotification') {
-                        window.location.href = '/mensajes/buzon/';
-                    } else if (notificationType === 'PostulanteAceptadoNotification') {
-                        window.location.href = '/inicio';
-                    } else if (notificationType === 'SubirArchivoNotification') {
-                        window.location.href = '/inicio';
-                    }
-                });
-
-                // Mostrar la cantidad de nuevas notificaciones en el badge del icono de campana
-                $('#cantidadDeNuevasNotificaciones').text(data.cantidadNotificacionesNuevas);
-
-                // Mostrar el modal
-                $('#notificacionesModal').modal('show');
-            }).fail(function() {
-                // En caso de error en la solicitud AJAX, mostrar un mensaje de error
-                $('#notificacionesModal .modal-body').html(
-                    '<p>Error al obtener las notificaciones.</p>');
-                $('#cantidadDeNuevasNotificaciones').text('0');
-                $('#notificacionesModal').modal('show');
-            });
-
-            // Configurar Laravel Echo para suscribirse a los eventos de Pusher
-            var pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
+        function subscribeToPusher() {
+            const pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
                 cluster: '{{ env('PUSHER_APP_CLUSTER') }}'
             });
 
-            var channel = pusher.subscribe('brief-valley-786');
+            const channel = pusher.subscribe('brief-valley-786');
 
-            // Manejar evento de nuevo mensaje
-            channel.bind('App\\Events\\NewMessageNotificationEvent', function(data) {
-                console.log('Nuevo mensaje recibido:', data);
+            channel.bind('App\\Events\\NewMessageNotificationEvent', handlePusherEvent);
+            channel.bind('App\\Events\\PostulanteAceptado', handlePusherEvent);
+            channel.bind('App\\Events\\SubirArchivoEvent', handlePusherEvent);
+        }
 
-                var newNotification;
-                if (data.type === 'NewMessageNotification') {
-                    newNotification = '<li data-message-id="' + data.id +
-                        '" data-type="NewMessageNotification">De: ' + data.sender.name +
-                        '<br>Mensaje: ' + data.message + '</li>';
-                } else if (data.type === 'PostulanteAceptadoNotification') {
-                    newNotification = '<li data-message-id="' + data.id +
-                        '" data-type="PostulanteAceptadoNotification">Mensaje: ' + data
-                        .message + '</li>';
-                } else if (data.type === 'SubirArchivoNotification') {
-                    newNotification = '<li data-message-id="' + data.id +
-                        '" data-type="SubirArchivoNotification">Mensaje: ' + data.message +
-                        '</li>';
-                }
+        function handlePusherEvent(data) {
+            const {
+                type,
+                id,
+                sender,
+                message
+            } = data;
+            const newNotification = renderNotification(type, id, sender?.name, message);
 
-                if ($('#notificacionesModal .modal-body ul').length === 0) {
-                    $('#notificacionesModal .modal-body').html('<ul>' + newNotification +
-                        '</ul>');
-                } else {
-                    $('#notificacionesModal .modal-body ul').prepend(newNotification);
-                }
+            if (notificationBody.find('ul').length === 0) {
+                notificationBody.html(`<ul>${newNotification}</ul>`);
+            } else {
+                notificationBody.find('ul').prepend(newNotification);
+            }
 
-                $('#notificacionesModal .modal-body li').first().click(function() {
-                    var messageId = $(this).data('message-id');
-                    var notificationType = $(this).data('type');
+            notificationBody.find('li').first().click(handleNotificationClick);
+        }
 
-                    if (notificationType === 'NewMessageNotification') {
-                        window.location.href = '/mensajes/buzon/';
-                    } else if (notificationType === 'PostulanteAceptadoNotification') {
-                        window.location.href = '/inicio';
-                    } else if (notificationType === 'SubirArchivoNotification') {
-                        window.location.href = '/inicio';
-                    }
-                });
-            });
+        $('#notificacionesModalLink').click(function(event) {
+            event.preventDefault();
 
-            // Manejar evento de aceptación de postulante
-            channel.bind('App\\Events\\PostulanteAceptado', function(data) {
-                console.log('Nuevo postulante aceptado:', data);
+            $.get('/notificaciones')
+                .done(updateModalContent)
+                .fail(() => {
+                    notificationBody.html('<p>Error al obtener las notificaciones.</p>');
+                    $('#cantidadDeNuevasNotificaciones').text('0');
+                })
+                .always(() => notificationModal.modal('show'));
 
-                var newNotification;
-                if (data.type === 'NewMessageNotification') {
-                    newNotification = '<li data-message-id="' + data.id +
-                        '" data-type="NewMessageNotification">De: ' + data.sender.name +
-                        '<br>Mensaje: ' + data.message + '</li>';
-                } else if (data.type === 'PostulanteAceptadoNotification') {
-                    newNotification = '<li data-message-id="' + data.id +
-                        '" data-type="PostulanteAceptadoNotification">Mensaje: ' + data
-                        .message + '</li>';
-                } else if (data.type === 'SubirArchivoNotification') {
-                    newNotification = '<li data-message-id="' + data.id +
-                        '" data-type="SubirArchivoNotification">Mensaje: ' + data.message +
-                        '</li>';
-                }
-
-                if ($('#notificacionesModal .modal-body ul').length === 0) {
-                    $('#notificacionesModal .modal-body').html('<ul>' + newNotification +
-                        '</ul>');
-                } else {
-                    $('#notificacionesModal .modal-body ul').prepend(newNotification);
-                }
-
-                $('#notificacionesModal .modal-body li').first().click(function() {
-                    var messageId = $(this).data('message-id');
-                    var notificationType = $(this).data('type');
-
-                    if (notificationType === 'NewMessageNotification') {
-                        window.location.href = '/mensajes/buzon/';
-                    } else if (notificationType === 'PostulanteAceptadoNotification') {
-                        window.location.href = '/inicio';
-                    } else if (notificationType === 'SubirArchivoNotification') {
-                        window.location.href = '/inicio';
-                    }
-                });
-            });
-            channel.bind('App\\Events\\SubirArchivoEvent', function(data) {
-                console.log('Subir archivo:', data);
-
-                var newNotification;
-                if (data.type === 'NewMessageNotification') {
-                    newNotification = '<li data-message-id="' + data.id +
-                        '" data-type="NewMessageNotification">De: ' + data.sender.name +
-                        '<br>Mensaje: ' + data.message + '</li>';
-                } else if (data.type === 'PostulanteAceptadoNotification') {
-                    newNotification = '<li data-message-id="' + data.id +
-                        '" data-type="PostulanteAceptadoNotification">Mensaje: ' + data
-                        .message + '</li>';
-                } else if (data.type === 'SubirArchivoNotification') {
-                    newNotification = '<li data-message-id="' + data.id +
-                        '" data-type="SubirArchivoNotification">Mensaje: ' + data.message +
-                        '</li>';
-                }
-
-                if ($('#notificacionesModal .modal-body ul').length === 0) {
-                    $('#notificacionesModal .modal-body').html('<ul>' + newNotification +
-                        '</ul>');
-                } else {
-                    $('#notificacionesModal .modal-body ul').prepend(newNotification);
-                }
-
-                $('#notificacionesModal .modal-body li').first().click(function() {
-                    var messageId = $(this).data('message-id');
-                    var notificationType = $(this).data('type');
-
-                    if (notificationType === 'NewMessageNotification') {
-                        window.location.href = '/mensajes/buzon/';
-                    } else if (notificationType === 'PostulanteAceptadoNotification') {
-                        window.location.href = '/inicio';
-                    } else if (notificationType === 'SubirArchivoNotification') {
-                        window.location.href = '/inicio';
-                    }
-                });
-            });
+            subscribeToPusher();
         });
     });
 </script>

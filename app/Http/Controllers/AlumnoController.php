@@ -6,7 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Alumno;
 use App\Models\Maestria;
+use App\Models\Retiro;
 use App\Models\Secretario;
+use App\Models\TasaTitulacion;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 
 class AlumnoController extends Controller
@@ -73,19 +77,20 @@ class AlumnoController extends Controller
                     }
 
                     // Botón Matricular
-                    if ($alumno->maestria->cohorte->count() > 0 && $alumno->matriculas->count() == 0) {
+                    if ($alumno->maestria && $alumno->maestria->cohortes && $alumno->matriculas->count() == 0) {
                         $acciones .= '<a href="' . url('/matriculas/create', $alumno->dni) . '" class="btn btn-outline-success btn-sm" title="Matricular">
-                                    <i class="fas fa-plus-circle"></i>
-                                  </a>';
+                                        <i class="fas fa-plus-circle"></i>
+                                      </a>';
                     }
 
                     // Botón Record Académico
                     if ($alumno->notas->count() > 0 && $alumno->maestria->asignaturas->count() > 0 && $alumno->notas->count() == $alumno->maestria->asignaturas->count()) {
 
-                        $acciones .= '<a href="' . route('record.show', $alumno->dni) . '" class="btn btn-outline-warning btn-sm" title="Record Académico">
-                                    <i class="fas fa-file-alt"> </i>
-                                  </a>';
+                        $acciones .= '<a href="' . route('record.show', $alumno->dni) . '" class="btn btn-outline-warning btn-sm" title="Record Académico" target="_blank">
+                                        <i class="fas fa-file-alt"></i>
+                                      </a>';
                     }
+
                     // Botón Calificar (solo para administradores)
                     if (auth()->user()->can('dashboard_admin')) {
                         $acciones .= '<a href="' . url('/notas/create', $alumno->dni) . '" class="btn btn-outline-info btn-sm" title="Calificar">
@@ -240,7 +245,7 @@ class AlumnoController extends Controller
         if ($request->hasFile('image')) {
             // Eliminar la imagen anterior si existe
             if ($alumno->image) {
-                \Storage::disk('public')->delete($alumno->image);
+                Storage::disk('public')->delete($alumno->image);
             }
 
             $path = $request->file('image')->store('imagenes_usuarios', 'public');
@@ -249,5 +254,64 @@ class AlumnoController extends Controller
         $alumno->save();
 
         return redirect()->route('alumnos.index')->with('success', 'Alumno actualizado correctamente');
+    }
+    public function retirarse(Request $request, $dni)
+    {
+        try {
+            $request->validate([
+                'retiro_documento' => 'required|file|mimes:pdf,doc,docx|max:2048',
+                'alumno_dni' => 'required|exists:alumnos,dni',
+            ]);
+
+            $alumno = Alumno::where('dni', $dni)->firstOrFail();
+
+            $path = $request->file('retiro_documento')->store('retiros', 'public');
+
+
+            Retiro::create([
+                'alumno_dni' => $request->input('alumno_dni'),
+                'documento_path' => $path,
+                'fecha_retiro' => now(),
+            ]);
+
+            $usuario = User::where('email', $alumno->email_institucional)->firstOrFail();
+            $usuario->status = 'INACTIVO';
+            $usuario->save();
+
+            $matricula = $alumno->matriculas()->first();
+            if (!$matricula) {
+                return redirect()->back()->with('error', 'Matrícula no encontrada');
+            }
+
+            // Obtener el cohorte y la maestría
+            $cohorteId = $matricula->cohorte_id;
+            $maestriaId = $alumno->maestria_id;
+
+            // Buscar o crear la tasa de titulación para el cohorte y la maestría
+            $tasaTitulacion = TasaTitulacion::where('cohorte_id', $cohorteId)
+                ->where('maestria_id', $maestriaId)
+                ->first();
+
+            if ($tasaTitulacion) {
+                $tasaTitulacion->retirados += 1;
+                $tasaTitulacion->save();
+            } else {
+                // Si no existe, lo creamos con valores iniciales
+                TasaTitulacion::create([
+                    'cohorte_id' => $cohorteId,
+                    'maestria_id' => $maestriaId,
+                    'retirados' => 1,  // Iniciamos con 1 graduado
+                ]);
+            }
+
+            Auth::logout();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()->with('success', 'Solicitud de retiro enviada con éxito.');
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 }

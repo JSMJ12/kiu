@@ -88,5 +88,4 @@ class NotasAsignaturaController extends Controller
         return $pdf->stream($pdfFileName);
     }
 
-
 }

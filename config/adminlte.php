@@ -321,8 +321,15 @@ return [
             'route'  => 'tesis.index',
             'icon' => 'fas fa-fw fa-graduation-cap',
             'can' => 'dashboard_coordinador'
+            
         ],
-        ['header' => 'Tutoriias de Tesis', 'can' => 'revisar_tesis'],
+        [
+            'text' => 'Examen Complexivo',
+            'route' => 'examen_complexivo.index',
+            'icon' => 'fas fa-fw fa-pencil-alt',
+            'can' => 'dashboard_coordinador'
+        ],        
+        ['header' => 'Tutorias de Tesis', 'can' => 'revisar_tesis'],
         [
             'text' => 'Tutorias',
             'route'  => 'tutorias.index',
@@ -393,6 +400,12 @@ return [
             'text' => 'Alumnos',
             'route'  => 'alumnos.index',
             'icon' => 'fas fa-fw fa-user-graduate',
+            'can' => 'secretarios.crear'
+        ],
+        [
+            'text' => 'Examen Complexivo',
+            'route' => 'examen-complexivo.calificar',
+            'icon' => 'fas fa-fw fa-pencil-alt',
             'can' => 'secretarios.crear'
         ],
         [

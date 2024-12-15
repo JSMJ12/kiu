@@ -5,23 +5,35 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Maestria;
 use App\Models\Docente;
+use App\Models\User;
+use Spatie\Permission\Models\Role;
 
 class MaestriaSeeder extends Seeder
 {
+
     public function run()
     {
-        // Obtener los DNIs de los primeros 10 docentes (sin repetir)
-        $docentes = Docente::inRandomOrder()->take(10)->pluck('dni');
+        // Crear el rol "Coordinador" si no existe
+        if (!Role::where('name', 'Coordinador')->exists()) {
+            Role::create(['name' => 'Coordinador', 'guard_name' => 'web']);
+        }
 
-        // Crear 10 maestrías con datos únicos para cada docente
-        foreach ($docentes as $dni) {
+        $docentes = Docente::inRandomOrder()->take(10)->get();
+
+        foreach ($docentes as $docente) {
             Maestria::create([
                 'nombre' => 'Maestría en ' . fake()->word(),
-                'coordinador' => $dni,
+                'coordinador' => $docente->dni,
                 'inscripcion' => fake()->numberBetween(500, 1000),
                 'matricula' => fake()->numberBetween(1500, 3000),
                 'arancel' => fake()->numberBetween(10000, 20000),
             ]);
+
+            // Busca el usuario por su email
+            $usuario = User::where('email', $docente->email)->first();
+            if ($usuario) {
+                $usuario->assignRole('Coordinador');
+            }
         }
     }
 }

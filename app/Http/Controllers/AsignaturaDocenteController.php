@@ -62,15 +62,15 @@ class AsignaturaDocenteController extends Controller
             );
         }
 
-        return redirect()->route('docentes.index');
+        return redirect()->route('docentes.index')->with('success', '¡Asignaturas asignadas con éxito!');
     }
 
 
     public function destroy($docente_dni, $asignatura_id)
     {
         $asignaturaDocente = AsignaturaDocente::where('docente_dni', $docente_dni)
-                                              ->where('asignatura_id', $asignatura_id)
-                                              ->first();
+            ->where('asignatura_id', $asignatura_id)
+            ->first();
 
         if ($asignaturaDocente) {
             $asignaturaDocente->delete();
@@ -78,5 +78,4 @@ class AsignaturaDocenteController extends Controller
 
         return redirect()->back()->with('success', 'Asignatura eliminada correctamente');
     }
-
 }

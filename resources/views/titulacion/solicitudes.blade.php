@@ -24,6 +24,7 @@
                             <th>Tema</th>
                             <th>Descripción</th>
                             <th>Estado</th>
+                            <th>Tipo</th> <!-- Nueva columna -->
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -61,6 +62,7 @@
             </div>
         </div>
     </div>
+
 @stop
 
 @section('js')
@@ -100,14 +102,32 @@
                     },
                     {
                         data: 'estado',
-                        
                         className: 'text-center'
+                    },
+                    {
+                        data: 'tipo',
+                        className: 'text-center',
+                        render: function(data, type, row) {
+                            if (data) {
+                                return data.replace(/\w\S*/g, function(word) {
+                                    return word.charAt(0).toUpperCase() + word.slice(1)
+                                        .toLowerCase();
+                                });
+                            }
+                            return '';
+                        }
                     },
                     {
                         data: 'acciones',
                         orderable: false,
                         searchable: false,
-                        className: 'text-center'
+                        className: 'text-center',
+                        render: function(data, type, row) {
+                            if (row.tipo === 'examen complexivo') {
+                                return '';
+                            }
+                            return data;
+                        }
                     }
                 ],
                 language: {

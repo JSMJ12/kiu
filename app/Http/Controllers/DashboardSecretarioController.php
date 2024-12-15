@@ -20,6 +20,23 @@ class DashboardSecretarioController extends Controller
     
     public function index(Request $request)
     {
+        $user = auth()->user();
+        $secretario = Secretario::where('nombre1', $user->name)
+                ->where('apellidop', $user->apellido)
+                ->where('email', $user->email)
+                ->firstOrFail();
+        $maestrias = $secretario->seccion->maestrias;
+        
+        $postulantesPorMaestria = [];
+
+        foreach ($maestrias as $maestria) {
+            $cantidadPostulantes = Postulante::where('maestria_id', $maestria->id)->count();
+            $postulantesPorMaestria[] = [
+                'maestria' => $maestria->nombre,
+                'cantidad_postulantes' => $cantidadPostulantes,
+            ];
+        }
+
         $perPage = $request->input('perPage', 10);
         $user = auth()->user();
         $alumnos = Alumno::with('maestria')->get();
@@ -29,12 +46,11 @@ class DashboardSecretarioController extends Controller
         $totalDocentes = Docente::count();
         $totalSecretarios = Secretario::count();
         $totalUsuarios = User::count();
-        $totalAlumnos = Alumno::count();
         $totalPostulantes = Postulante::count();
-
-        return view('dashboard.secretario', 
+        $totalAlumnos = Alumno::count();
+        return view('dashboard.administrador', 
         compact('alumnos', 'matriculadosPorMaestria', 'totalAlumnos', 
         'perPage', 'totalUsuarios', 'totalMaestrias', 'totalSecretarios', 'totalDocentes',
-        'totalPostulantes'));
+        'totalPostulantes', 'postulantesPorMaestria'));
     }
 }

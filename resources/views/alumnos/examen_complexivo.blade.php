@@ -3,7 +3,7 @@
 @section('title', 'Gestión de Alumnos')
 
 @section('content_header')
-    <h1><i class="fas fa-users"></i> Gestión de Alumnos</h1>
+    <h1><i class="fas fa-users"></i> Gestión de Alumnos - Examen Complexivo</h1>
 @stop
 
 @section('content')
@@ -11,11 +11,6 @@
         <div class="card shadow-lg">
             <div class="card-header text-white" style="background-color: #3007b8;">
                 <h3 class="card-title">Listado de Alumnos</h3>
-                <div class="card-tools">
-                    <a href="{{ route('alumnos.create') }}" class="btn btn-light btn-sm">
-                        <i class="fas fa-plus"></i> Agregar nuevo
-                    </a>
-                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -39,6 +34,7 @@
             </div>
         </div>
     </div>
+
     <div id="dynamicModals"></div>
 @stop
 
@@ -48,7 +44,7 @@
             let alumnosTable = $('#alumnos').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('alumnos.index') }}",
+                ajax: "{{ route('examen-complexivo.calificar') }}",
                 columns: [{
                         data: 'dni',
                         name: 'dni'
@@ -82,15 +78,14 @@
                         searchable: false
                     },
                 ],
-                responsive: true, // Habilitar el diseño responsivo
-                
+                responsive: true,
                 columnDefs: [{
-                        targets: [1, 6], // Aplica estilo especial a las columnas de foto y acciones
+                        targets: [1, 6],
                         className: 'text-center'
                     },
                     {
                         targets: '_all',
-                        className: 'align-middle' // Alinear verticalmente las columnas
+                        className: 'align-middle'
                     }
                 ],
                 language: {
@@ -98,47 +93,36 @@
                 },
             });
 
-            // Manejo dinámico de los modales
-            $('#alumnos').on('click', '.view-matriculas', function() {
-                let alumnoId = $(this).data('id');
-                let matriculas = $(this).data('matriculas');
 
-                let modalId = `matriculasModal${alumnoId}`;
+            $('#alumnos').on('click', '.btn-primary', function() {
+                let alumnoId = $(this).data('dni');
+                let alumnoNombre = $(this).data('nombre');
+
+                let modalId = `calificarModal${alumnoId}`;
                 let modalHtml = `
                     <div class="modal fade" id="${modalId}" tabindex="-1" role="dialog" aria-labelledby="${modalId}Label" aria-hidden="true">
                         <div class="modal-dialog modal-lg" role="document">
                             <div class="modal-content">
                                 <div class="modal-header" style="background-color: #003366; color: white;">
-                                    <h5 class="modal-title" id="${modalId}Label">Matrículas del Alumno</h5>
+                                    <h5 class="modal-title" id="${modalId}Label">Calificar Examen - ${alumnoNombre}</h5>
                                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                         <span aria-hidden="true" style="color: white;">&times;</span>
                                     </button>
                                 </div>
                                 <div class="modal-body">
-                                    ${matriculas.length > 0 
-                                        ? `<table class="table">
-                                                          <thead>
-                                                              <tr>
-                                                                  <th>Asignatura</th>
-                                                                  <th>Docente</th>
-                                                                  <th>Cohorte</th>
-                                                                  <th>Aula</th>
-                                                                  <th>Paralelo</th>
-                                                              </tr>
-                                                          </thead>
-                                                          <tbody>
-                                                              ${matriculas.map(m => `
-                                                      <tr>
-                                                          <td>${m.asignatura}</td>
-                                                          <td>${m.docente}</td>
-                                                          <td>${m.cohorte}</td>
-                                                          <td>${m.aula}</td>
-                                                          <td>${m.paralelo}</td>
-                                                      </tr>`).join('')}
-                                                          </tbody>
-                                                      </table>` 
-                                        : '<div class="alert alert-info">El estudiante no tiene matrículas registradas.</div>'
-                                    }
+                                    <form id="unifiedForm${alumnoId}" method="POST" action="{{ route('examen-complexivo.actualizarNotaYFechaGraduacion') }}">
+                                        @csrf
+                                        <input type="hidden" name="alumno_dni" value="${alumnoId}">
+                                        <div class="form-group">
+                                            <label for="nota">Nota:</label>
+                                            <input type="number" name="nota" class="form-control" required min="0" max="10" step="0.01">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="fecha_graduacion">Fecha de Graduación:</label>
+                                            <input type="date" name="fecha_graduacion" class="form-control" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-success">Guardar Nota y Registrar Fecha</button>
+                                    </form>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
@@ -147,15 +131,13 @@
                         </div>
                     </div>
                 `;
-
-                // Agregar modal al DOM si no existe
                 if (!$(`#${modalId}`).length) {
                     $('#dynamicModals').append(modalHtml);
                 }
 
-                // Mostrar el modal
                 $(`#${modalId}`).modal('show');
             });
+
         });
     </script>
 @stop

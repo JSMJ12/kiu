@@ -18,6 +18,7 @@ class Tesis extends Model
         'descripcion',
         'solicitud_pdf',
         'estado',
+        'tipo',
     ];
 
     public function alumno()
@@ -27,7 +28,7 @@ class Tesis extends Model
 
     public function tutor()
     {
-        return $this->belongsTo(Docente::class, 'tutor_id', 'dni');
+        return $this->belongsTo(Docente::class, 'tutor_dni', 'dni');
     }
     public function tutorias()
     {

@@ -23,7 +23,7 @@ class DashboardPostulanteController extends Controller
         $postulante = Postulante::where('nombre1', $user->name)
             ->where('apellidop', $user->apellido)
             ->where('correo_electronico', $user->email)
-            ->with(['maestria.cohorte' => function ($query) {
+            ->with(['maestria.cohortes' => function ($query) {
                 $query->latest();
             }])
             ->firstOrFail();
