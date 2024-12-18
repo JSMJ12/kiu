@@ -8,6 +8,10 @@ use Illuminate\Http\Request;
 
 class CorreoController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     // Método para mostrar el formulario de envío de correo
     public function formulario()
     {

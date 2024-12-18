@@ -9,6 +9,10 @@ use Illuminate\Http\Request;
 
 class TitulacionesController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     public function store(Request $request)
     {
         // Validar que los archivos sean PDFs

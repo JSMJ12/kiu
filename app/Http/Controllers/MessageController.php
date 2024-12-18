@@ -10,6 +10,10 @@ use App\Models\Message;
 
 class MessageController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     public function index(Request $request)
     {
         $perPage = $request->input('perPage', 5);

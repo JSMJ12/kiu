@@ -17,6 +17,10 @@ use App\Notifications\PostulanteAceptadoNotification;
 
 class PostulanteController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     public function index(Request $request)
     {
         $perPage = $request->input('perPage', 10);

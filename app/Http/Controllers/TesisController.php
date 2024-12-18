@@ -14,10 +14,15 @@ use App\Models\User;
 use App\Notifications\TesisAceptadaNotificacion;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
 
 class TesisController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -76,7 +81,7 @@ class TesisController extends Controller
 
             // Verificar si el usuario está asignado
             if (!$tesis->alumno) {
-                \Log::error('No se encontró alumno para la tesis con ID: ' . $id);
+                Log::error('No se encontró alumno para la tesis con ID: ' . $id);
                 return response()->json(['error' => 'No hay usuario asignado a esta tesis.'], 400);
             }
 
@@ -93,7 +98,7 @@ class TesisController extends Controller
 
             return response()->json(['success' => 'Tema aceptado correctamente.']);
         } catch (\Exception $e) {
-            \Log::error('Error al aceptar tema: ' . $e->getMessage());
+            Log::error('Error al aceptar tema: ' . $e->getMessage());
             return response()->json(['error' => 'Ocurrió un error en el servidor.'], 500);
         }
     }

@@ -1,7 +1,7 @@
 <?php
 
 return [
-    
+
     /*
     |--------------------------------------------------------------------------
     | Title
@@ -297,8 +297,8 @@ return [
             'type' => 'sidebar-menu-search',
             'text' => 'Buscar',
         ],
-        
-        
+
+
         ['header' => 'Administracion', 'can' => 'dashboard_admin'],
         ['header' => 'Postulación', 'can' => 'dashboard_postulante'],
         [
@@ -314,21 +314,21 @@ return [
             'route'  => 'dashboard_coordinador',
             'icon' => 'fas fa-fw fa-home',
             'can' => 'dashboard_coordinador'
-            
+
         ],
         [
             'text' => 'Solicitudes de Tesis',
             'route'  => 'tesis.index',
             'icon' => 'fas fa-fw fa-graduation-cap',
             'can' => 'dashboard_coordinador'
-            
+
         ],
         [
             'text' => 'Examen Complexivo',
             'route' => 'examen_complexivo.index',
             'icon' => 'fas fa-fw fa-pencil-alt',
             'can' => 'dashboard_coordinador'
-        ],        
+        ],
         ['header' => 'Tutorias de Tesis', 'can' => 'revisar_tesis'],
         [
             'text' => 'Tutorias',
@@ -352,19 +352,19 @@ return [
             'text' => 'Pagos',
             'route'  => 'pagos.index',
             'icon' => 'fas fa-fw fa-dollar-sign',
-            'can' => 'dashboard_secretario_epsu', 
+            'can' => 'dashboard_secretario_epsu',
         ],
         [
             'text' => 'Pagos',
             'route' => 'pagos.pago',
             'icon' => 'fas fa-fw fa-dollar-sign',
-            'can' => 'alumno_descuento', 
+            'can' => 'alumno_descuento',
         ],
         [
             'text' => 'Datos Personales',
             'route' => 'edit_datosAlumnos',
             'icon' => 'fas fa-fw fa-user',
-            'can' => 'alumno_descuento', 
+            'can' => 'alumno_descuento',
         ],
         [
             'text' => 'Notas',
@@ -376,7 +376,7 @@ return [
             'text' => 'Descuento',
             'route' => 'descuentos.alumnos',
             'icon' => 'fa fa-percent',
-            'can' => 'dashboard_secretario_epsu', 
+            'can' => 'dashboard_secretario_epsu',
         ],
         [
             'text' => 'Tesis',
@@ -409,12 +409,18 @@ return [
             'can' => 'secretarios.crear'
         ],
         [
+            'text' => 'Tasa de Titulacion',
+            'route' => 'tasa_titulacion.index',
+            'icon' => 'fas fa-fw fa-chart-line',
+            'can' => 'secretarios.crear'
+        ],
+        [
             'text' => 'Maestrias',
             'route'  => 'maestrias.index',
             'icon' => 'fas fa-fw fa-graduation-cap',
             'can' => 'dashboard_admin'
         ],
-        
+
         [
             'text' => 'Aulas',
             'route'  => 'aulas.index',

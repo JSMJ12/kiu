@@ -7,6 +7,10 @@ use App\Models\Alumno;
 
 class DescuentoController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     public function alumnos(Request $request)
     {
         if ($request->ajax()) {

@@ -38,6 +38,7 @@ use App\Http\Controllers\TesisController;
 use App\Http\Controllers\CoordinadorController;
 use App\Http\Controllers\DescuentoController;
 use App\Http\Controllers\Examen_ComplexivoController;
+use App\Http\Controllers\TasaTitulacionController;
 use App\Http\Controllers\TitulacionAlumnoController;
 use App\Http\Controllers\TitulacionesController;
 use App\Http\Controllers\TutoriaController;
@@ -248,3 +249,8 @@ Route::post('/examen-complexivo/actualizarNotaYFechaGraduacion', [Examen_Complex
 
 //TASA TITULACION
 Route::post('/titulacion-alumno/proceso', [TitulacionAlumnoController::class, 'store'])->name('titulacion_alumno.store');
+Route::get('/tasa_titulacion/show/{id}', [TasaTitulacionController::class, 'show'])->name('tasa_titulacion.show');
+Route::get('/tasa_titulacion', [TasaTitulacionController::class, 'index'])->name('tasa_titulacion.index');
+Route::get('/tasa_titulacion/cohortes/{id}', [TasaTitulacionController::class, 'getCohortes'])->name('tasa_titulacion.cohortes');
+Route::get('/tasa-titulacion/export/{maestria_id}/{cohorte_id}', [TasaTitulacionController::class, 'export2'])->name('tasa_titulacion.export');
+Route::get('/tasa-titulacion/export/estudiantes/{maestria_id}/{cohorte_id}', [TasaTitulacionController::class, 'export'])->name('estdiantes.export');

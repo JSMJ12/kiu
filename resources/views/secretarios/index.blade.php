@@ -38,49 +38,69 @@
 @stop
 
 @section('js')
-<script>
-    $(document).ready(function() {
-        $('#secretarios').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: "{{ route('secretarios.index') }}",
-            columns: [
-                { data: 'dni', name: 'dni' },
-                { data: 'foto', name: 'foto', orderable: false, searchable: false },
-                { 
-                    data: null, 
-                    render: function(data) {
-                        return `${data.apellidop} ${data.apellidom} <br> ${data.nombre1} ${data.nombre2}`;
+    <script>
+        $(document).ready(function() {
+            $('#secretarios').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ route('secretarios.index') }}",
+                columns: [{
+                        data: 'dni',
+                        name: 'dni'
                     },
-                    name: 'nombres' 
-                },
-                { data: 'email', name: 'email' },
-                { 
-                    data: 'seccion.nombre', 
-                    name: 'seccion.nombre',
-                    render: function(data, type, row) {
-                        return `<button type="button" class="btn btn-info mostrar-seccion" data-id="${row.seccion.id}" title="Mostrar Sección">
+                    {
+                        data: 'foto',
+                        name: 'foto',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: null,
+                        render: function(data) {
+                            return `${data.apellidop} ${data.apellidom} <br> ${data.nombre1} ${data.nombre2}`;
+                        },
+                        name: 'nombres'
+                    },
+                    {
+                        data: 'email',
+                        name: 'email'
+                    },
+                    {
+                        data: 'seccion.nombre',
+                        name: 'seccion.nombre',
+                        render: function(data, type, row) {
+                            return `<button type="button" class="btn btn-info mostrar-seccion" data-id="${row.seccion.id}" title="Mostrar Sección">
                                     <i class="fas fa-eye"></i>
                                 </button>`;
+                        }
+                    },
+                    {
+                        data: 'acciones',
+                        name: 'acciones',
+                        orderable: false,
+                        searchable: false
                     }
-                },
-                { data: 'acciones', name: 'acciones', orderable: false, searchable: false }
-            ],
-            language: {
-                url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
-            }
-        });
+                ],
+                responsive: true,
+                colReorder: true,
+                keys: true,
+                autoFill: true,
+                language: {
+                    url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+                }
+            });
 
-        // Cargar modal dinámicamente al hacer clic en el botón
-        $(document).on('click', '.mostrar-seccion', function() {
-            var seccionId = $(this).data('id');
-            // Llamada AJAX para cargar datos de la sección
-            $.ajax({
-                url: "/secciones/" + seccionId,  // Asume que tienes una ruta para obtener los detalles de la sección
-                method: "GET",
-                success: function(data) {
-                    // Crear el modal
-                    var modalHtml = `
+            // Cargar modal dinámicamente al hacer clic en el botón
+            $(document).on('click', '.mostrar-seccion', function() {
+                var seccionId = $(this).data('id');
+                // Llamada AJAX para cargar datos de la sección
+                $.ajax({
+                    url: "/secciones/" +
+                    seccionId, // Asume que tienes una ruta para obtener los detalles de la sección
+                    method: "GET",
+                    success: function(data) {
+                        // Crear el modal
+                        var modalHtml = `
                         <div class="modal fade" id="mostrarSeccionModal_${data.id}" tabindex="-1" role="dialog" aria-labelledby="mostrarSeccionModalLabel_${data.id}" aria-hidden="true">
                             <div class="modal-dialog" role="document">
                                 <div class="modal-content">
@@ -104,13 +124,13 @@
                             </div>
                         </div>
                     `;
-                    // Append the modal HTML to the body and show it
-                    $('body').append(modalHtml);
-                    $('#mostrarSeccionModal_' + data.id).modal('show');
-                }
+                        // Append the modal HTML to the body and show it
+                        $('body').append(modalHtml);
+                        $('#mostrarSeccionModal_' + data.id).modal('show');
+                    }
+                });
             });
         });
-    });
-</script>
+    </script>
 
 @stop

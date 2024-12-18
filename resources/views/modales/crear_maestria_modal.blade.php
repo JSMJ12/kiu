@@ -11,6 +11,10 @@
                 <form action="{{ route('maestrias.store') }}" method="POST">
                     @csrf
                     <div class="form-group">
+                        <label for="maestria-codigo">Codigo:</label>
+                        <input type="text" class="form-control" id="codigo" name="codigo" required>
+                    </div>
+                    <div class="form-group">
                         <label for="maestria-nombre">Nombre:</label>
                         <input type="text" class="form-control" id="nombre" name="nombre" required>
                     </div>

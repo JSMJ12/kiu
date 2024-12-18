@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\File;
 
 class RecordController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     public function show($alumno_dni)
     {
         // Obtener el alumno y sus notas

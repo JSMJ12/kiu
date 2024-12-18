@@ -99,13 +99,13 @@
                                 @endif
                             </div>
                         @endif
-                        @if ($tesis && $tesis->estado === 'aprobada')
+                        @if ($tesis && $tesis->estado === 'aprobado')
                             <div class="alert alert-success text-center">
                                 <h5><i class="fas fa-check-circle"></i> Tu tema ha sido aprobado.</h5>
                                 <p>Continúa con las tutorías asignadas.</p>
                             </div>
                         @endif
-                        @if ($tesis && $tesis->estado === 'pendiente' && $tesis->tipo === 'trabajo de titulación')
+                        @if ($tesis && $tesis->estado === 'pendiente' && ($tesis->tipo === 'trabajo de titulación' || $tesis->tipo === 'artículo científico'))
                             <div class="alert alert-warning text-center">
                                 <h5><i class="fas fa-exclamation-circle"></i> Tu tema está en revisión.</h5>
                                 <p>Se te notificará si es aprobada o rechazada.</p>

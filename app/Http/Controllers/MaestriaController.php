@@ -26,6 +26,7 @@ class MaestriaController extends Controller
     {   
         $maestria = new Maestria;
         $maestria->nombre = $request->input('nombre');
+        $maestria->codigo = $request->input('codigo');
         $maestria->coordinador = $request->input('coordinador');
         $maestria->matricula = $request->input('matricula');
         $maestria->arancel = $request->input('arancel');
@@ -85,6 +86,7 @@ class MaestriaController extends Controller
 
         // Actualizamos la maestría
         $maestria->nombre = $request->input('nombre');
+        $maestria->codigo = $request->input('codigo');
         $maestria->coordinador = $request->input('coordinador');
         $maestria->matricula = $request->input('matricula');
         $maestria->arancel = $request->input('arancel');

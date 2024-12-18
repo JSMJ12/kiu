@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('maestrias', function (Blueprint $table) {
             $table->id();
+            $table->string('codigo');
             $table->string('nombre');
             $table->enum('status', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
             $table->decimal('inscripcion', 8, 2)->nullable();

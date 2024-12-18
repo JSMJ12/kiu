@@ -26,6 +26,7 @@
                             <thead style="background-color: #28a745; color: white;">
                                 <tr>
                                     <th>ID</th>
+                                    <th>Codigo</th>
                                     <th>Nombre</th>
                                     <th>Coordinador</th>
                                     <th>Asignaturas</th>
@@ -40,6 +41,7 @@
                                     @include('modales.anadir_asignatura_modal')
                                     <tr>
                                         <td>{{ $maestria->id }}</td>
+                                        <td>{{ $maestria->codigo }}</td>
                                         <td>{{ $maestria->nombre }}</td>
                                         <td>
                                             @foreach ($docentes as $docente)

@@ -10,6 +10,10 @@ use Yajra\DataTables\Contracts\DataTable;
 
 class TutoriaController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     public function index(Request $request)
     {
         // Obtener el docente autenticado usando el email del usuario actual

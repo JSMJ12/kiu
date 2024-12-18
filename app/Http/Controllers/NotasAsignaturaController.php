@@ -15,6 +15,10 @@ use App\Models\Alumno;
 use Carbon\Carbon;
 class NotasAsignaturaController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
     public function show($docenteDni, $asignaturaId, $cohorteId, $aulaId = null, $paraleloId = null)
     {
         // Obtain enrolled students, considering optional aula and paralelo

@@ -11,7 +11,7 @@ class Maestria extends Model
     protected $table = 'maestrias';
 
     protected $fillable = [
-        'nombre', 'status', 'coordinador', 'inscripcion', 'matricula', 'arancel'
+        'codigo', 'nombre', 'status', 'coordinador', 'inscripcion', 'matricula', 'arancel'
     ];
     
     public function cohortes()
