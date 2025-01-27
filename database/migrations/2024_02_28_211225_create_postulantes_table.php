@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('celular')->nullable();
             $table->string('titulo_profesional')->nullable();
             $table->string('universidad_titulo')->nullable();
-            $table->enum('sexo', ['HOMBRE', 'MUJER']);
+            $table->enum('sexo', ['F', 'M']);
             $table->date('fecha_nacimiento');
             $table->string('nacionalidad')->nullable();
             $table->enum('discapacidad', ['Si', 'No']);

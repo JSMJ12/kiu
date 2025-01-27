@@ -179,8 +179,7 @@ class CohorteDocenteController extends Controller
                 }
             }
 
-            // Redirigir con éxito
-            return redirect()->route('docentes.index')->with('success', 'Cohortes actualizados con éxito.');
+            return redirect()->route('docentes.index')->with('success', 'Cohortes añadidos con éxito.');
         } catch (ModelNotFoundException $e) {
             // Manejar el caso donde no se encuentre el docente
             return redirect()->route('docentes.index')->with('error', 'Docente no encontrado.');

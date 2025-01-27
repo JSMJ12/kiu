@@ -48,8 +48,8 @@
                             <input type="text" name="apellidom" id="apellidom" class="form-control" value="{{ $alumno->apellidom }}" required>
                         </div>
                         <div class="form-group">
-                            <label for="email_per"><i class="fas fa-envelope"></i> Email Personal:</label>
-                            <input type="email" name="email_per" id="email_per" class="form-control" value="{{ $alumno->email_personal }}" required>
+                            <label for="email_personal"><i class="fas fa-envelope"></i> Email Personal:</label>
+                            <input type="email" name="email_personal" id="email_personal" class="form-control" value="{{ $alumno->email_personal }}" required>
                         </div>
                         <div class="form-group">
                             <label for="email_ins"><i class="fas fa-envelope"></i> Email Institucional:</label>

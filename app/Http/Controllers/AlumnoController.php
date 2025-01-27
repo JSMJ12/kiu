@@ -235,7 +235,6 @@ class AlumnoController extends Controller
         $alumno->nacionalidad = $request->input('nacionalidad');
         $alumno->etnia = $request->input('etnia');
         $alumno->email_personal = $request->input('email_personal');
-        $alumno->email_institucional = $request->input('email_institucional');
         $alumno->carnet_discapacidad = $request->input('carnet_discapacidad');
         $alumno->tipo_discapacidad = $request->input('tipo_discapacidad');
         $alumno->porcentaje_discapacidad = $request->input('porcentaje_discapacidad');
@@ -250,6 +249,10 @@ class AlumnoController extends Controller
 
             $path = $request->file('image')->store('imagenes_usuarios', 'public');
             $alumno->image = $path;
+            $usuario = User::where('email', $alumno->email_institucional)->firstOrFail();
+
+            $usuario->image = $alumno->image;
+            $usuario->save();
         }
         $alumno->save();
 

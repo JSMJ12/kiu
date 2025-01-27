@@ -27,6 +27,7 @@ class MaestriaSeeder extends Seeder
                 'inscripcion' => fake()->numberBetween(500, 1000),
                 'matricula' => fake()->numberBetween(1500, 3000),
                 'arancel' => fake()->numberBetween(10000, 20000),
+                'codigo' => fake()->numberBetween(10000, 20000),
             ]);
 
             // Busca el usuario por su email

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
+use App\Models\Alumno;
 use App\Models\Maestria;
 use Illuminate\Database\Seeder;
 
@@ -19,10 +20,11 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class, 
             DocenteSeeder::class,
             MaestriaSeeder::class,
-            AsignaturaSeeder::class,
             PeriodoAcademicoSeeder::class,
             AulaSeeder::class,
+            AsignaturaSeeder::class,
             CohorteSeeder::class,
+            AlumnoSeeder::class,
         ]);
     }
 }

@@ -37,6 +37,7 @@ use App\Http\Controllers\PerfilAlumnoController;
 use App\Http\Controllers\TesisController;
 use App\Http\Controllers\CoordinadorController;
 use App\Http\Controllers\DescuentoController;
+use App\Http\Controllers\DocumentoPostulanteController;
 use App\Http\Controllers\Examen_ComplexivoController;
 use App\Http\Controllers\TasaTitulacionController;
 use App\Http\Controllers\TitulacionAlumnoController;
@@ -122,10 +123,12 @@ Route::resource('cohortes', CohorteController::class)->middleware(['can:dashboar
 
 //Postulaciones
 Route::resource('postulaciones', PostulanteController::class);
+
 Route::post('postulante/store', [DashboardPostulanteController::class, 'store'])->middleware('can:dashboard_postulante')->name('dashboard_postulante.store');
 Route::get('postulantes/{dni}/carta-aceptacion', [DashboardPostulanteController::class, 'carta_aceptacionPdf'])->middleware('can:dashboard_postulante')->name('postulantes.carta_aceptacion');
 Route::post('/postulantes/{dni}/convertir', [PostulanteController::class, 'convertirEnEstudiante'])->middleware('can:dashboard_secretario')->name('postulantes.convertir');
 Route::post('postulacion/{dni}/aceptar', [PostulanteController::class, 'acep_neg'])->where('dni', '.*')->name('postulantes.aceptar');
+
 //COHORTES DOCENTES
 Route::get('cohortes_docentes/create/{docente_dni}/{asignatura_id?}', [CohorteDocenteController::class, 'create'])
     ->middleware(['can:dashboard_secretario'])
@@ -254,3 +257,7 @@ Route::get('/tasa_titulacion', [TasaTitulacionController::class, 'index'])->name
 Route::get('/tasa_titulacion/cohortes/{id}', [TasaTitulacionController::class, 'getCohortes'])->name('tasa_titulacion.cohortes');
 Route::get('/tasa-titulacion/export/{maestria_id}/{cohorte_id}', [TasaTitulacionController::class, 'export2'])->name('tasa_titulacion.export');
 Route::get('/tasa-titulacion/export/estudiantes/{maestria_id}/{cohorte_id}', [TasaTitulacionController::class, 'export'])->name('estdiantes.export');
+
+
+//DOCUMENTOS POSTULANTES
+Route::post('/postulantes/{id}/verificar', [DocumentoPostulanteController::class, 'verificar'])->name('documentos.verificar');

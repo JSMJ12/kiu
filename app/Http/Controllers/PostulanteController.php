@@ -17,27 +17,27 @@ use App\Notifications\PostulanteAceptadoNotification;
 
 class PostulanteController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
     public function index(Request $request)
     {
         $perPage = $request->input('perPage', 10);
         $user = auth()->user();
 
         if ($user->hasRole('Administrador')) {
-            $postulantes = Postulante::all();
+            $postulantes = Postulante::with('documentos_verificados')->get();
         } else {
             $secretario = Secretario::where('nombre1', $user->name)
                 ->where('apellidop', $user->apellido)
                 ->where('email', $user->email)
                 ->firstOrFail();
             $maestriasIds = $secretario->seccion->maestrias->pluck('id');
-            $postulantes = Postulante::whereIn('maestria_id', $maestriasIds)->get();
+            $postulantes = Postulante::whereIn('maestria_id', $maestriasIds)
+                ->with('documentos_verificados')
+                ->get();
         }
+
         return view('postulantes.index', compact('postulantes', 'perPage'));
     }
+
 
     public function create()
     {
@@ -155,7 +155,7 @@ class PostulanteController extends Controller
         $usuario->name = $request->input('nombre1');
         $usuario->apellido = $request->input('apellidop');
         $usuario->sexo = $request->input('sexo') === 'HOMBRE' ? 'M' : 'F';
-        $usuario->password = bcrypt($request->input('dni')); // Contraseña igual al DNI
+        $usuario->password = bcrypt($request->input('dni'));
         $usuario->status = $request->input('estatus', 'ACTIVO');
         $usuario->email = $request->input('correo_electronico');
         $usuario->image = $imagenPath;
@@ -167,7 +167,7 @@ class PostulanteController extends Controller
         Notification::route('mail', $usuario->email)
             ->notify(new NuevoUsuarioNotification($usuario, $request->input('dni'), $usuario->name));
 
-        // Autenticar al usuario
+
         Auth::login($usuario);
 
         return redirect()->route('inicio')->with('success', 'Postulación realizada exitosamente.');
@@ -241,7 +241,7 @@ class PostulanteController extends Controller
         $pago_matricula_path = $postulante->pago_matricula;
 
         if ($postulante->status) {
-            $email_institucional = strtolower($postulante->apellidop) . strtolower($postulante->nombre1) . '-' . substr($postulante->dni, -4) . '@unesum.edu.ec';
+            $email_institucional = strtolower($postulante->apellidop) . '-' . strtolower($postulante->nombre1) . substr($postulante->dni, -4) . '@unesum.edu.ec';
 
             $estudiante = Alumno::create([
                 'dni' => $postulante->dni,

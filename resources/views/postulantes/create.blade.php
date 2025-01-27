@@ -40,6 +40,9 @@
                                         <div class="form-group">
                                             <label for="imagen">Foto:</label>
                                             <input type="file" id="imageInput" name="imagen" accept="image/*">
+                                            @error('imagen')
+                                                <span class="text-danger">{{ $message }}</span>
+                                            @enderror
                                         </div>
                                     </div>
                                     <br>
@@ -283,7 +286,7 @@
     }
 
 
-    
+
     .header {
         text-align: center;
         margin-top: 10px;
@@ -356,6 +359,22 @@
         right: 0.75rem;
         transform: translateY(-50%);
         pointer-events: none;
+    }
+
+    .card.body {
+        margin: 0;
+        font-family: "Nunito", sans-serif;
+        font-size: 0.9rem;
+        font-weight: 400;
+        line-height: 1.6;
+        color: #212529;
+        text-align: left;
+        background-image: url('/images/portada2.png') !important;
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-position: center center;
+        background-color: #f8fafc;
     }
 </style>
 <script>

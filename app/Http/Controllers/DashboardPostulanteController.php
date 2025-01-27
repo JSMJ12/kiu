@@ -61,13 +61,13 @@ class DashboardPostulanteController extends Controller
         Storage::makeDirectory('public/postulantes/pdf');
 
         $files = [
-            'pdf_cedula' => 'pdf_cedula',
-            'pdf_papelvotacion' => 'pdf_papelvotacion',
-            'pdf_titulouniversidad' => 'pdf_titulouniversidad',
-            'pdf_hojavida' => 'pdf_hojavida',
-            'pdf_conadis' => 'pdf_conadis',
+            'Cedula' => 'pdf_cedula',
+            'Papel_Votación' => 'pdf_papelvotacion',
+            'Título_Universidad' => 'pdf_titulouniversidad',
+            'Hoja_de_Vida' => 'pdf_hojavida',
+            'CONADIS' => 'pdf_conadis',
+            'Carta_de_Aceptación' => 'carta_aceptacion',
             'pago_matricula' => 'pago_matricula',
-            'carta_aceptacion' => 'carta_aceptacion',
         ];
 
         $updateData = [];
@@ -87,7 +87,7 @@ class DashboardPostulanteController extends Controller
         Notification::route('mail', $postulante->correo_electronico)
             ->notify(new Postulacion2($postulante));
 
-        return redirect()->route('inicio')->with('success', 'Postulación realizada exitosamente.');
+        return back()->with('success', 'Archivo subido exitosamente.');
     }
 
 

@@ -59,5 +59,8 @@ class Postulante extends Model
     {
         return $this->belongsTo(Maestria::class, 'maestria_id');
     }
-
+    public function documentos_verificados()
+    {
+        return $this->hasMany(DocumentoPostulante::class, 'dni_postulante', 'dni');
+    }
 }
